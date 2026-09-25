@@ -1,0 +1,4 @@
+# Only track the talentflow project from this folder.
+/*
+!/talentflow/
+!/.gitignore
