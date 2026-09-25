@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import AuthLayout from '../components/AuthLayout'
+import GoogleIcon from '../components/GoogleIcon'
 import { supabase } from '../lib/supabase'
 
 export default function LoginPage() {
@@ -27,8 +28,9 @@ export default function LoginPage() {
     <AuthLayout title="Welcome back" subtitle="Sign in to TalentFlow">
       <button
         onClick={handleGoogle}
-        className="w-full border border-slate-300 rounded-lg py-2.5 font-medium text-slate-700 hover:bg-slate-50 mb-4"
+        className="w-full flex items-center justify-center gap-3 border border-slate-300 rounded-lg py-2.5 font-medium text-slate-700 hover:bg-slate-50 mb-4"
       >
+        <GoogleIcon />
         Continue with Google
       </button>
 
