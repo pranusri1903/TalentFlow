@@ -65,9 +65,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
+        # Supabase's transaction pooler (pgbouncer) manages pooling itself, and each
+        # statement can land on a different backend connection, so Django shouldn't
+        # hold its own long-lived connections or use server-side cursors.
+        conn_max_age=0,
     )
 }
+if 'postgres' in DATABASES['default'].get('ENGINE', ''):
+    DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

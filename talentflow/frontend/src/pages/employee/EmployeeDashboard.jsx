@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 
+import KanbanBoard from '../../components/KanbanBoard'
+import TaskStatusPieChart from '../../components/TaskStatusPieChart'
 import { useAuth } from '../../context/AuthContext'
+import { departmentLabel } from '../../lib/departments'
 import { api } from '../../lib/api'
-
-const TASK_STATUSES = ['todo', 'in_progress', 'review', 'done']
 
 export default function EmployeeDashboard() {
   const { profile } = useAuth()
@@ -25,12 +26,12 @@ export default function EmployeeDashboard() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       <div className="bg-white border border-slate-200 rounded-xl p-6">
         <h1 className="text-2xl font-bold text-slate-900">Welcome, {profile?.full_name || profile?.email}</h1>
         {employee ? (
           <p className="text-slate-500 mt-1">
-            {employee.job_title || 'Employee'} {employee.department && `· ${employee.department}`}
+            {employee.job_title || 'Employee'} {employee.department && `· ${departmentLabel(employee.department)}`}
             {employee.manager_name && ` · Reports to ${employee.manager_name}`}
           </p>
         ) : (
@@ -58,27 +59,12 @@ export default function EmployeeDashboard() {
         {tasks.length === 0 ? (
           <p className="text-slate-500 text-sm">No tasks assigned yet.</p>
         ) : (
-          <div className="space-y-3">
-            {tasks.map((task) => (
-              <div key={task.id} className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3 last:border-0">
-                <div>
-                  <p className="font-medium text-slate-900">{task.title}</p>
-                  {task.description && <p className="text-sm text-slate-500">{task.description}</p>}
-                </div>
-                <select
-                  value={task.status}
-                  onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                  className="border border-slate-300 rounded-lg px-2 py-1 text-sm"
-                >
-                  {TASK_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s.replace('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="mb-4">
+              <TaskStatusPieChart tasks={tasks} />
+            </div>
+            <KanbanBoard tasks={tasks} onStatusChange={updateTaskStatus} />
+          </>
         )}
       </div>
     </div>

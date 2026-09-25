@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import StatusBadge from '../../components/StatusBadge'
+import KanbanBoard from '../../components/KanbanBoard'
+import TaskStatusPieChart from '../../components/TaskStatusPieChart'
 import { departmentLabel } from '../../lib/departments'
 import { api } from '../../lib/api'
-
-const TASK_STATUSES = ['todo', 'in_progress', 'review', 'done']
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams()
@@ -66,7 +65,7 @@ export default function AdminProjectDetailPage() {
   if (!project) return <p className="p-8 text-center text-slate-500">Loading...</p>
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       <button onClick={() => navigate(-1)} className="text-sm text-slate-500 hover:text-indigo-600">
         ← Back to projects
       </button>
@@ -176,32 +175,13 @@ export default function AdminProjectDetailPage() {
           </div>
         </form>
 
-        <div className="space-y-3">
-          {tasks.map((task) => (
-            <div key={task.id} className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3 last:border-0">
-              <div>
-                <p className="font-medium text-slate-900">{task.title}</p>
-                <p className="text-xs text-slate-400">
-                  {task.assignee_names.length > 0 ? task.assignee_names.join(', ') : 'Unassigned'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge status={task.status} />
-                <select
-                  value={task.status}
-                  onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                  className="border border-slate-300 rounded-lg px-2 py-1 text-sm"
-                >
-                  {TASK_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s.replace('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ))}
-        </div>
+        {tasks.length > 0 && (
+          <div className="mb-4">
+            <TaskStatusPieChart tasks={tasks} />
+          </div>
+        )}
+
+        <KanbanBoard tasks={tasks} onStatusChange={updateTaskStatus} />
       </div>
     </div>
   )
