@@ -1,4 +1,6 @@
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import (
+    ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,8 +9,8 @@ from accounts.models import Profile
 from accounts.permissions import IsAdmin
 from employees.models import Employee
 
-from .models import Project, Task
-from .serializers import ProjectSerializer, TaskSerializer
+from .models import Project, Sprint, Task
+from .serializers import ProjectSerializer, SprintSerializer, TaskSerializer
 
 
 class ProjectListCreateView(ListCreateAPIView):
@@ -40,10 +42,37 @@ class ProjectTaskListCreateView(ListCreateAPIView):
         return [IsAuthenticated()] if self.request.method == 'GET' else [IsAdmin()]
 
     def get_queryset(self):
-        return Task.objects.prefetch_related('assignees__profile').filter(project_id=self.kwargs['project_id'])
+        return Task.objects.prefetch_related('assignees__profile').select_related('sprint').filter(
+            project_id=self.kwargs['project_id']
+        )
 
     def perform_create(self, serializer):
         serializer.save(project_id=self.kwargs['project_id'])
+
+
+class ProjectSprintListCreateView(ListCreateAPIView):
+    serializer_class = SprintSerializer
+
+    def get_permissions(self):
+        return [IsAuthenticated()] if self.request.method == 'GET' else [IsAdmin()]
+
+    def get_queryset(self):
+        return Sprint.objects.filter(project_id=self.kwargs['project_id']).order_by('-start_date')
+
+    def perform_create(self, serializer):
+        serializer.save(project_id=self.kwargs['project_id'])
+
+
+class SprintDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdmin]
+    serializer_class = SprintSerializer
+    queryset = Sprint.objects.all()
+
+
+class TaskDetailView(RetrieveUpdateAPIView):
+    permission_classes = [IsAdmin]
+    serializer_class = TaskSerializer
+    queryset = Task.objects.prefetch_related('assignees__profile').select_related('sprint')
 
 
 class MyTasksView(ListAPIView):

@@ -1,21 +1,29 @@
 from rest_framework import serializers
 
-from .models import Project, Task
+from .models import Project, Sprint, Task
 
 
 class TaskSerializer(serializers.ModelSerializer):
     assignee_names = serializers.SerializerMethodField()
+    sprint_name = serializers.CharField(source='sprint.name', read_only=True, default=None)
 
     class Meta:
         model = Task
         fields = [
-            'id', 'project', 'title', 'description', 'assignees', 'assignee_names',
-            'status', 'created_at', 'updated_at',
+            'id', 'project', 'sprint', 'sprint_name', 'title', 'description',
+            'assignees', 'assignee_names', 'status', 'created_at', 'updated_at',
         ]
         read_only_fields = ['project']
 
     def get_assignee_names(self, obj):
         return [a.profile.full_name or a.profile.email for a in obj.assignees.select_related('profile')]
+
+
+class SprintSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sprint
+        fields = ['id', 'project', 'name', 'start_date', 'end_date', 'status', 'created_at']
+        read_only_fields = ['project']
 
 
 class ProjectSerializer(serializers.ModelSerializer):

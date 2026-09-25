@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 import { TASK_STATUSES } from '../lib/taskStatus'
 
-function TaskCard({ task }) {
+function TaskCard({ task, sprints, onSprintChange }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
   const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 }
 
@@ -20,11 +20,28 @@ function TaskCard({ task }) {
       <p className="text-xs text-slate-400 mt-2">
         {task.assignee_names?.length > 0 ? task.assignee_names.join(', ') : 'Unassigned'}
       </p>
+      {onSprintChange ? (
+        <select
+          value={task.sprint || ''}
+          onChange={(e) => onSprintChange(task.id, e.target.value || null)}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="mt-2 w-full border border-slate-200 rounded text-xs px-1.5 py-1 text-slate-500"
+        >
+          <option value="">Backlog</option>
+          {sprints.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      ) : (
+        task.sprint_name && <p className="text-xs text-indigo-500 mt-1">{task.sprint_name}</p>
+      )}
     </div>
   )
 }
 
-function Column({ status, tasks }) {
+function Column({ status, tasks, sprints, onSprintChange }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.value })
 
   return (
@@ -36,14 +53,14 @@ function Column({ status, tasks }) {
       </div>
       <div className="space-y-2 min-h-[60px]">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} sprints={sprints} onSprintChange={onSprintChange} />
         ))}
       </div>
     </div>
   )
 }
 
-export default function KanbanBoard({ tasks, onStatusChange }) {
+export default function KanbanBoard({ tasks, onStatusChange, sprints, onSprintChange }) {
   const handleDragEnd = ({ active, over }) => {
     if (!over) return
     const task = tasks.find((t) => t.id === active.id)
@@ -54,7 +71,13 @@ export default function KanbanBoard({ tasks, onStatusChange }) {
     <DndContext onDragEnd={handleDragEnd}>
       <div className="flex gap-3 overflow-x-auto pb-2">
         {TASK_STATUSES.map((status) => (
-          <Column key={status.value} status={status} tasks={tasks.filter((t) => t.status === status.value)} />
+          <Column
+            key={status.value}
+            status={status}
+            tasks={tasks.filter((t) => t.status === status.value)}
+            sprints={sprints}
+            onSprintChange={onSprintChange}
+          />
         ))}
       </div>
     </DndContext>
