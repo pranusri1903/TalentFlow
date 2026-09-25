@@ -73,7 +73,7 @@ export default function LoginPage() {
         </Link>
       </p>
       <p className="text-xs text-slate-400 mt-2 text-center">
-        HR, employee and admin accounts are created by your administrator.
+        Employee accounts are handled by the administrator.
       </p>
     </AuthLayout>
   )
