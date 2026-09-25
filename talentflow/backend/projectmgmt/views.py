@@ -40,7 +40,7 @@ class ProjectTaskListCreateView(ListCreateAPIView):
         return [IsAuthenticated()] if self.request.method == 'GET' else [IsAdmin()]
 
     def get_queryset(self):
-        return Task.objects.select_related('assignee__profile').filter(project_id=self.kwargs['project_id'])
+        return Task.objects.prefetch_related('assignees__profile').filter(project_id=self.kwargs['project_id'])
 
     def perform_create(self, serializer):
         serializer.save(project_id=self.kwargs['project_id'])
@@ -54,18 +54,18 @@ class MyTasksView(ListAPIView):
         employee = Employee.objects.filter(profile=self.request.user).first()
         if not employee:
             return Task.objects.none()
-        return Task.objects.select_related('assignee__profile').filter(assignee=employee).order_by('-updated_at')
+        return Task.objects.prefetch_related('assignees__profile').filter(assignees=employee).order_by('-updated_at')
 
 
 class TaskStatusUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        task = Task.objects.select_related('assignee__profile').filter(pk=pk).first()
+        task = Task.objects.prefetch_related('assignees__profile').filter(pk=pk).first()
         if not task:
             return Response({'detail': 'Task not found.'}, status=404)
 
-        is_owner = task.assignee and task.assignee.profile_id == request.user.id
+        is_owner = task.assignees.filter(profile_id=request.user.id).exists()
         if request.user.role != Profile.ADMIN and not is_owner:
             return Response({'detail': 'Not allowed.'}, status=403)
 

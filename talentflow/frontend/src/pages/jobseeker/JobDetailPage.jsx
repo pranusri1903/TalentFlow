@@ -70,13 +70,19 @@ export default function JobDetailPage() {
         ) : (
           <form onSubmit={handleApply} className="space-y-4">
             <h2 className="font-semibold text-slate-900">Apply for this job</h2>
-            <input
-              type="file"
-              required
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => setResume(e.target.files[0])}
-              className="w-full text-sm"
-            />
+            <div className="flex items-center gap-3">
+              <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg px-4 py-2.5">
+                Choose resume file
+                <input
+                  type="file"
+                  required
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => setResume(e.target.files[0])}
+                  className="hidden"
+                />
+              </label>
+              <span className="text-sm text-slate-500">{resume ? resume.name : 'No file chosen'}</span>
+            </div>
             <textarea
               placeholder="Cover letter (optional)"
               value={coverLetter}

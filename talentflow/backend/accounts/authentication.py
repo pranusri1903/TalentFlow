@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import jwt
 from django.conf import settings
 from rest_framework.authentication import BaseAuthentication
@@ -6,8 +8,13 @@ from rest_framework.exceptions import AuthenticationFailed
 from .models import Profile
 
 
+@lru_cache
+def _jwk_client():
+    return jwt.PyJWKClient(f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json")
+
+
 class SupabaseAuthentication(BaseAuthentication):
-    """Verifies a Supabase-issued JWT and syncs it to a local Profile."""
+    """Verifies a Supabase-issued JWT (via Supabase's public JWKS) and syncs it to a local Profile."""
 
     def authenticate(self, request):
         auth_header = request.headers.get('Authorization', '')
@@ -16,10 +23,11 @@ class SupabaseAuthentication(BaseAuthentication):
 
         token = auth_header.split(' ', 1)[1]
         try:
+            signing_key = _jwk_client().get_signing_key_from_jwt(token)
             payload = jwt.decode(
                 token,
-                settings.SUPABASE_JWT_SECRET,
-                algorithms=['HS256'],
+                signing_key.key,
+                algorithms=['RS256', 'ES256'],
                 audience='authenticated',
             )
         except jwt.PyJWTError as exc:

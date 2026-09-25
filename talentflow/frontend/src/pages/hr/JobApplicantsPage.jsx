@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import StatusBadge from '../../components/StatusBadge'
+import { useAuth } from '../../context/AuthContext'
 import { api } from '../../lib/api'
 
 const STATUSES = ['applied', 'shortlisted', 'interview', 'hired', 'rejected']
@@ -9,6 +10,8 @@ const STATUSES = ['applied', 'shortlisted', 'interview', 'hired', 'rejected']
 export default function JobApplicantsPage() {
   const { jobId } = useParams()
   const navigate = useNavigate()
+  const { profile } = useAuth()
+  const canChangeStatus = profile?.role === 'hr'
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -51,17 +54,23 @@ export default function JobApplicantsPage() {
                 <a href={app.resume} target="_blank" rel="noreferrer" className="text-sm text-indigo-600 font-medium">
                   View resume
                 </a>
-                <select
-                  value={app.status}
-                  onChange={(e) => updateStatus(app.id, e.target.value)}
-                  className="ml-auto border border-slate-300 rounded-lg px-2 py-1 text-sm"
-                >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                {app.status === 'hired' ? (
+                  <span className="ml-auto text-sm text-slate-400">Status locked</span>
+                ) : !canChangeStatus ? (
+                  <span className="ml-auto text-sm text-slate-400">Only HR can change status</span>
+                ) : (
+                  <select
+                    value={app.status}
+                    onChange={(e) => updateStatus(app.id, e.target.value)}
+                    className="ml-auto border border-slate-300 rounded-lg px-2 py-1 text-sm"
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
           ))}

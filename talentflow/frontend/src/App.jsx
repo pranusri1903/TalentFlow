@@ -22,7 +22,15 @@ function RootRedirect() {
   const { session, profile } = useAuth()
   if (!session) return <Navigate to="/login" replace />
   if (!profile) return null
+  if (profile.must_change_password) return <Navigate to="/change-password" replace />
   return <Navigate to={HOME_BY_ROLE[profile.role] || '/login'} replace />
+}
+
+function RedirectIfAuthed({ children }) {
+  const { session, loading } = useAuth()
+  if (loading) return null
+  if (session) return <Navigate to="/" replace />
+  return children
 }
 
 function Layout({ children }) {
@@ -37,8 +45,8 @@ function Layout({ children }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/login" element={<RedirectIfAuthed><LoginPage /></RedirectIfAuthed>} />
+      <Route path="/signup" element={<RedirectIfAuthed><SignupPage /></RedirectIfAuthed>} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/" element={<RootRedirect />} />
 

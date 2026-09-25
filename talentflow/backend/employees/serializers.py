@@ -18,6 +18,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class EmployeeUpdateSerializer(serializers.ModelSerializer):
+    # job_title/department are edited via accounts.UserDetailView instead, since changing
+    # department there also keeps Profile.role (hr vs employee) in sync.
     class Meta:
         model = Employee
-        fields = ['job_title', 'department', 'manager', 'status']
+        fields = ['manager', 'status']

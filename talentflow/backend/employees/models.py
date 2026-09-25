@@ -9,9 +9,22 @@ class Employee(models.Model):
     TERMINATED = 'terminated'
     STATUS_CHOICES = [(ACTIVE, 'Active'), (ON_LEAVE, 'On Leave'), (TERMINATED, 'Terminated')]
 
+    DEVELOPMENT = 'development'
+    DESIGNING = 'designing'
+    HR = 'hr'
+    SALES = 'sales'
+    OTHER = 'other'
+    DEPARTMENT_CHOICES = [
+        (DEVELOPMENT, 'Development'),
+        (DESIGNING, 'Designing'),
+        (HR, 'Hr'),
+        (SALES, 'Sales'),
+        (OTHER, 'Other'),
+    ]
+
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name='employee')
     job_title = models.CharField(max_length=100, blank=True)
-    department = models.CharField(max_length=100, blank=True)
+    department = models.CharField(max_length=20, choices=DEPARTMENT_CHOICES, blank=True)
     manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reports')
     date_joined = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=ACTIVE)

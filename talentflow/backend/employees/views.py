@@ -22,7 +22,9 @@ class MyEmployeeProfileView(APIView):
 class EmployeeListView(ListAPIView):
     permission_classes = [IsAdmin]
     serializer_class = EmployeeSerializer
-    queryset = Employee.objects.select_related('profile', 'manager__profile').order_by('-date_joined')
+    queryset = Employee.objects.select_related('profile', 'manager__profile').filter(
+        profile__is_active=True
+    ).order_by('-date_joined')
 
 
 class EmployeeDetailView(RetrieveUpdateAPIView):

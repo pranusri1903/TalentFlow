@@ -10,5 +10,6 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'project', 'assignee', 'status', 'updated_at')
+    list_display = ('title', 'project', 'status', 'updated_at')
     list_filter = ('status', 'project')
+    filter_horizontal = ('assignees',)

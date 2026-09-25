@@ -1,7 +1,13 @@
 from pathlib import Path
 import os
+import certifi
 import dj_database_url
 from dotenv import load_dotenv
+
+# Some local Python installs (notably python.org builds on macOS) don't wire up
+# the system CA trust store, so any SSL connection (SMTP, JWKS fetches, etc.)
+# fails with CERTIFICATE_VERIFY_FAILED. Point OpenSSL at certifi's bundle instead.
+os.environ.setdefault('SSL_CERT_FILE', certifi.where())
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
@@ -89,7 +95,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- Supabase (Auth + Postgres) ---
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
-SUPABASE_JWT_SECRET = os.environ.get('SUPABASE_JWT_SECRET', '')
+# "secret key" in Supabase's API Keys settings (used for the Admin API: creating users server-side)
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 
 # --- CORS ---

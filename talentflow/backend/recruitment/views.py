@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import Profile
-from accounts.permissions import IsCandidate, IsHROrAdmin
+from accounts.permissions import IsCandidate, IsHR, IsHROrAdmin
 from employees.models import Employee
 
 from .models import Application, Job
@@ -82,12 +82,16 @@ class JobApplicationsView(ListAPIView):
 
 
 class ApplicationStatusUpdateView(APIView):
-    permission_classes = [IsHROrAdmin]
+    # Only HR can move an application through the pipeline (including hiring, which converts
+    # the candidate into an employee) — admin manages roles/promotions afterwards, not hiring.
+    permission_classes = [IsHR]
 
     def patch(self, request, pk):
         application = Application.objects.select_related('job', 'candidate').filter(pk=pk).first()
         if not application:
             return Response({'detail': 'Application not found.'}, status=404)
+        if application.status == Application.HIRED:
+            return Response({'detail': 'This candidate is already hired; status can no longer be changed.'}, status=400)
 
         serializer = ApplicationStatusUpdateSerializer(application, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
