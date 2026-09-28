@@ -28,13 +28,19 @@ class SprintSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     member_names = serializers.SerializerMethodField()
+    manager_name = serializers.CharField(source='manager.profile.full_name', read_only=True, default=None)
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description', 'members', 'member_names', 'created_at']
+        fields = ['id', 'name', 'description', 'members', 'member_names', 'manager', 'manager_name', 'created_at']
 
     def get_member_names(self, obj):
         return [
             m.profile.full_name or m.profile.email
             for m in obj.members.select_related('profile').filter(profile__is_active=True)
         ]
+
+    def validate_manager(self, manager):
+        if manager and not manager.is_manager:
+            raise serializers.ValidationError('Selected employee is not marked as a manager.')
+        return manager

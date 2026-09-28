@@ -101,6 +101,17 @@ export default function AdminDashboard() {
     }
   }
 
+  const updateEmployee = async (employeeId, patch) => {
+    try {
+      await api.patch(`/employees/${employeeId}/`, patch)
+      loadUsers()
+    } catch (err) {
+      alert(err.response?.data?.manager?.[0] || err.response?.data?.detail || 'Could not update employee.')
+    }
+  }
+
+  const managers = users.filter((u) => u.is_manager)
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between">
@@ -213,6 +224,28 @@ export default function AdminDashboard() {
                           onChange={(job_title) => updateUser(user.id, { job_title })}
                         />
                       )}
+                      <label className="flex items-center gap-1.5 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={user.is_manager}
+                          onChange={(e) => updateEmployee(user.employee_id, { is_manager: e.target.checked })}
+                        />
+                        Manager
+                      </label>
+                      <select
+                        value={user.manager_id || ''}
+                        onChange={(e) => updateEmployee(user.employee_id, { manager: e.target.value || null })}
+                        className="border border-slate-300 rounded-lg px-2 py-1 text-sm"
+                      >
+                        <option value="">Reports to: none</option>
+                        {managers
+                          .filter((m) => m.employee_id !== user.employee_id)
+                          .map((m) => (
+                            <option key={m.employee_id} value={m.employee_id}>
+                              Reports to: {m.full_name || m.email}
+                            </option>
+                          ))}
+                      </select>
                     </>
                   )}
                 </>

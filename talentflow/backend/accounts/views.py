@@ -6,9 +6,9 @@ from rest_framework.views import APIView
 
 from employees.models import Employee
 
-from .models import Profile
+from .models import Notification, Profile
 from .permissions import IsAdmin
-from .serializers import CreateUserSerializer, ProfileSerializer, UpdateUserSerializer
+from .serializers import CreateUserSerializer, NotificationSerializer, ProfileSerializer, UpdateUserSerializer
 from .services import create_supabase_user, generate_temp_password, send_temp_password_email
 
 
@@ -111,3 +111,35 @@ class UserDetailView(RetrieveUpdateDestroyAPIView):
 
         profile.save()
         return Response(ProfileSerializer(profile).data)
+
+
+class NotificationListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)[:50]
+
+
+class NotificationUnreadCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        return Response({'count': count})
+
+
+class MarkNotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        Notification.objects.filter(pk=pk, recipient=request.user).update(is_read=True)
+        return Response(status=204)
+
+
+class MarkAllNotificationsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        return Response(status=204)

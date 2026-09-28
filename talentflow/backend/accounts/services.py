@@ -4,9 +4,18 @@ import requests
 from django.conf import settings
 from django.core.mail import send_mail
 
+from .models import Notification
+
 
 def generate_temp_password():
     return secrets.token_urlsafe(9)
+
+
+def notify(recipient, message, link=''):
+    """Creates an in-app notification for a Profile. Silently a no-op if recipient is falsy."""
+    if not recipient:
+        return
+    Notification.objects.create(recipient=recipient, message=message, link=link)
 
 
 def create_supabase_user(email, password, full_name=''):

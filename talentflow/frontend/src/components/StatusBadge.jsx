@@ -10,6 +10,8 @@ const COLORS = {
   in_progress: 'bg-blue-100 text-blue-700',
   review: 'bg-amber-100 text-amber-700',
   done: 'bg-green-100 text-green-700',
+  pending: 'bg-amber-100 text-amber-700',
+  approved: 'bg-green-100 text-green-700',
 }
 
 export default function StatusBadge({ status }) {

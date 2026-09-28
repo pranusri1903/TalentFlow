@@ -7,6 +7,9 @@ class Project(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)
     members = models.ManyToManyField(Employee, related_name='projects', blank=True)
+    manager = models.ForeignKey(
+        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_projects'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -15,3 +15,16 @@ IsEmployee = role_permission('employee')
 IsCandidate = role_permission('candidate')
 IsHROrAdmin = role_permission('hr', 'admin')
 IsEmployeeOrAdmin = role_permission('employee', 'admin')
+
+
+class IsAdminOrManager(BasePermission):
+    """Admin, or a staff member flagged as a manager (approves their reports' leave, runs their projects)."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user:
+            return False
+        if user.role == 'admin':
+            return True
+        from employees.models import Employee
+        return Employee.objects.filter(profile=user, is_manager=True).exists()

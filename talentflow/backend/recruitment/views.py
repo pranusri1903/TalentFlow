@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from accounts.models import Profile
 from accounts.permissions import IsCandidate, IsHR, IsHROrAdmin
+from accounts.services import notify
 from employees.models import Employee
 
 from .models import Application, Job
@@ -101,6 +102,11 @@ class ApplicationStatusUpdateView(APIView):
             if application.status == Application.HIRED:
                 self._convert_to_employee(application.candidate)
 
+        notify(
+            application.candidate,
+            f"Your application for '{application.job.title}' is now {application.get_status_display().lower()}.",
+            link='/employee' if application.status == Application.HIRED else '/my-applications',
+        )
         return Response(ApplicationSerializer(application).data)
 
     @staticmethod

@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminLeaveRequestsPage from './pages/admin/AdminLeaveRequestsPage'
 import AdminProjectDetailPage from './pages/admin/AdminProjectDetailPage'
 import AdminProjectsPage from './pages/admin/AdminProjectsPage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
@@ -61,7 +62,8 @@ export default function App() {
 
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
       <Route path="/admin/projects" element={<ProtectedRoute roles={['admin']}><Layout><AdminProjectsPage /></Layout></ProtectedRoute>} />
-      <Route path="/admin/projects/:id" element={<ProtectedRoute roles={['admin']}><Layout><AdminProjectDetailPage /></Layout></ProtectedRoute>} />
+      <Route path="/admin/projects/:id" element={<ProtectedRoute roles={['admin']} allowManagers><Layout><AdminProjectDetailPage /></Layout></ProtectedRoute>} />
+      <Route path="/admin/leave" element={<ProtectedRoute roles={['admin']}><Layout><AdminLeaveRequestsPage /></Layout></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

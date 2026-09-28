@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
+import NotificationBell from './NotificationBell'
 
 const LINKS_BY_ROLE = {
   candidate: [
@@ -13,6 +14,7 @@ const LINKS_BY_ROLE = {
   admin: [
     { to: '/admin', label: 'Users' },
     { to: '/admin/projects', label: 'Projects' },
+    { to: '/admin/leave', label: 'Leave' },
   ],
 }
 
@@ -39,6 +41,7 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
+          {profile && <NotificationBell />}
           {profile && (
             <button onClick={signOut} className="text-sm font-medium text-slate-500 hover:text-red-600">
               Sign out
@@ -46,9 +49,12 @@ export default function Navbar() {
           )}
         </div>
 
-        <button className="md:hidden text-slate-600" onClick={() => setOpen((o) => !o)}>
-          ☰
-        </button>
+        <div className="md:hidden flex items-center gap-4">
+          {profile && <NotificationBell />}
+          <button className="text-slate-600" onClick={() => setOpen((o) => !o)}>
+            ☰
+          </button>
+        </div>
       </div>
 
       {open && (

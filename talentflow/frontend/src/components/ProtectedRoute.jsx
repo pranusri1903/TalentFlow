@@ -9,7 +9,7 @@ const HOME_BY_ROLE = {
   admin: '/admin',
 }
 
-export default function ProtectedRoute({ roles, children }) {
+export default function ProtectedRoute({ roles, allowManagers, children }) {
   const { session, profile, loading } = useAuth()
 
   if (loading) return <div className="p-10 text-center text-slate-500">Loading...</div>
@@ -17,7 +17,8 @@ export default function ProtectedRoute({ roles, children }) {
   if (!profile) return <div className="p-10 text-center text-slate-500">Setting up your account...</div>
 
   if (profile.must_change_password) return <Navigate to="/change-password" replace />
-  if (roles && !roles.includes(profile.role)) {
+  const roleAllowed = !roles || roles.includes(profile.role)
+  if (!roleAllowed && !(allowManagers && profile.is_manager)) {
     return <Navigate to={HOME_BY_ROLE[profile.role] || '/'} replace />
   }
 

@@ -3,12 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import KanbanBoard from '../../components/KanbanBoard'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
+import { useAuth } from '../../context/AuthContext'
 import { departmentLabel } from '../../lib/departments'
 import { api } from '../../lib/api'
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { profile } = useAuth()
   const [project, setProject] = useState(null)
   const [employees, setEmployees] = useState([])
   const [assignedElsewhere, setAssignedElsewhere] = useState(new Set())
@@ -37,6 +39,11 @@ export default function AdminProjectDetailPage() {
     loadAssignedElsewhere()
     api.get('/employees/').then(({ data }) => setEmployees(data))
   }, [id])
+
+  const updateManager = async (employeeId) => {
+    await api.patch(`/projects/projects/${id}/`, { manager: employeeId || null })
+    loadProject()
+  }
 
   const toggleMember = async (employeeId) => {
     const members = project.members.includes(employeeId)
@@ -111,6 +118,27 @@ export default function AdminProjectDetailPage() {
       <div className="bg-white border border-slate-200 rounded-xl p-6">
         <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
         {project.description && <p className="text-slate-500 mt-1">{project.description}</p>}
+        {profile?.role === 'admin' ? (
+          <div className="flex items-center gap-2 mt-3">
+            <span className="text-sm text-slate-500">Manager:</span>
+            <select
+              value={project.manager || ''}
+              onChange={(e) => updateManager(e.target.value)}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-sm"
+            >
+              <option value="">Unassigned</option>
+              {employees
+                .filter((emp) => emp.is_manager)
+                .map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.profile.full_name || emp.profile.email}
+                  </option>
+                ))}
+            </select>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500 mt-3">Manager: {project.manager_name || 'Unassigned'}</p>
+        )}
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-6">
