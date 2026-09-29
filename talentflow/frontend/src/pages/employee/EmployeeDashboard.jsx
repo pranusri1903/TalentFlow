@@ -1,4 +1,4 @@
-import { CalendarPlus, CheckSquare, FolderKanban, ListChecks, X } from 'lucide-react'
+import { CalendarPlus, CheckSquare, FolderKanban, ListChecks, Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -14,9 +14,11 @@ import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/ui/PageHeader'
 import { useAuth } from '../../context/AuthContext'
 import { departmentLabel } from '../../lib/departments'
+import { TASK_PRIORITIES } from '../../lib/taskMeta'
 import { api } from '../../lib/api'
 
 const EMPTY_LEAVE_FORM = { start_date: '', end_date: '', reason: '' }
+const EMPTY_TASK_FILTERS = { search: '', priority: '', label: '' }
 const GROUP_OPTIONS = [
   { value: 'status', label: 'Status' },
   { value: 'type', label: 'Type' },
@@ -35,6 +37,7 @@ export default function EmployeeDashboard() {
   const [leaveForm, setLeaveForm] = useState(EMPTY_LEAVE_FORM)
   const [leaveError, setLeaveError] = useState('')
   const [taskGroupBy, setTaskGroupBy] = useState('status')
+  const [taskFilters, setTaskFilters] = useState(EMPTY_TASK_FILTERS)
   const [openTask, setOpenTask] = useState(null)
 
   const loadTasks = () => api.get('/projects/my-tasks/').then(({ data }) => setTasks(data))
@@ -76,6 +79,19 @@ export default function EmployeeDashboard() {
   }
 
   const usedPct = leaveBalance ? Math.round((leaveBalance.used / leaveBalance.allowance) * 100) : 0
+
+  const filteredTasks = tasks
+    .filter((t) => {
+      const q = taskFilters.search.trim().toLowerCase()
+      return !q || t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
+    })
+    .filter((t) => !taskFilters.priority || t.priority === taskFilters.priority)
+    .filter(
+      (t) =>
+        !taskFilters.label ||
+        t.labels?.split(',').map((l) => l.trim().toLowerCase()).includes(taskFilters.label.toLowerCase())
+    )
+  const allTaskLabels = [...new Set(tasks.flatMap((t) => t.labels?.split(',').map((l) => l.trim()).filter(Boolean) || []))]
 
   return (
     <div className="space-y-6">
@@ -213,15 +229,55 @@ export default function EmployeeDashboard() {
       >
         {tasks.length === 0 ? (
           <EmptyState icon={CheckSquare} title="No tasks assigned yet" />
-        ) : taskGroupBy === 'status' ? (
-          <>
-            <div className="mb-4">
-              <TaskStatusPieChart tasks={tasks} />
-            </div>
-            <KanbanBoard tasks={tasks} onStatusChange={updateTaskStatus} onOpenTask={setOpenTask} />
-          </>
         ) : (
-          <GroupedTaskList tasks={tasks} groupBy={taskGroupBy} onOpenTask={setOpenTask} />
+          <>
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="relative flex-1 min-w-[160px]">
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  placeholder="Search my tasks..."
+                  value={taskFilters.search}
+                  onChange={(e) => setTaskFilters({ ...taskFilters, search: e.target.value })}
+                  className="w-full border border-slate-300 rounded-lg pl-8 pr-2 py-1.5 text-xs"
+                />
+              </div>
+              <select
+                value={taskFilters.priority}
+                onChange={(e) => setTaskFilters({ ...taskFilters, priority: e.target.value })}
+                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs"
+              >
+                <option value="">All priorities</option>
+                {TASK_PRIORITIES.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+              {allTaskLabels.length > 0 && (
+                <select
+                  value={taskFilters.label}
+                  onChange={(e) => setTaskFilters({ ...taskFilters, label: e.target.value })}
+                  className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs"
+                >
+                  <option value="">All labels</option>
+                  {allTaskLabels.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {filteredTasks.length === 0 ? (
+              <EmptyState icon={CheckSquare} title="No tasks match these filters" />
+            ) : taskGroupBy === 'status' ? (
+              <>
+                <div className="mb-4">
+                  <TaskStatusPieChart tasks={filteredTasks} />
+                </div>
+                <KanbanBoard tasks={filteredTasks} onStatusChange={updateTaskStatus} onOpenTask={setOpenTask} />
+              </>
+            ) : (
+              <GroupedTaskList tasks={filteredTasks} groupBy={taskGroupBy} onOpenTask={setOpenTask} />
+            )}
+          </>
         )}
       </Card>
 

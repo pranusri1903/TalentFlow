@@ -9,6 +9,7 @@ DEPARTMENT_CHOICES = [c[0] for c in Employee.DEPARTMENT_CHOICES]
 
 class ProfileSerializer(serializers.ModelSerializer):
     employee_id = serializers.SerializerMethodField()
+    employee_code = serializers.SerializerMethodField()
     job_title = serializers.SerializerMethodField()
     department = serializers.SerializerMethodField()
     is_manager = serializers.SerializerMethodField()
@@ -20,13 +21,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'full_name', 'role',
             'must_change_password', 'is_active', 'deactivated_at', 'created_at',
-            'employee_id', 'job_title', 'department', 'is_manager', 'manager_id', 'manager_name',
+            'employee_id', 'employee_code', 'job_title', 'department', 'is_manager', 'manager_id', 'manager_name',
         ]
         read_only_fields = fields
 
     def get_employee_id(self, obj):
         employee = getattr(obj, 'employee', None)
         return employee.id if employee else None
+
+    def get_employee_code(self, obj):
+        employee = getattr(obj, 'employee', None)
+        return employee.employee_code if employee else None
 
     def get_job_title(self, obj):
         employee = getattr(obj, 'employee', None)

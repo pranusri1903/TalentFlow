@@ -23,6 +23,7 @@ class Employee(models.Model):
     ]
 
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name='employee')
+    employee_code = models.CharField(max_length=20, unique=True, blank=True, editable=False)
     job_title = models.CharField(max_length=100, blank=True)
     department = models.CharField(max_length=20, choices=DEPARTMENT_CHOICES, blank=True)
     manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reports')
@@ -34,6 +35,14 @@ class Employee(models.Model):
         # Manager-ness is derived from the designation itself (e.g. "Manager", "HR Manager",
         # "Associate Sales Manager") rather than a separate flag, so the two can never disagree.
         return 'manager' in self.job_title.lower()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.employee_code:
+            # Derived from the row's own pk once it exists, so it's assigned exactly once,
+            # right after the first insert, with no separate counter to keep in sync.
+            self.employee_code = f'EMP{self.pk:04d}'
+            super().save(update_fields=['employee_code'])
 
     def __str__(self):
         return f"{self.profile.full_name or self.profile.email} - {self.job_title}"
