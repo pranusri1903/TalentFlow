@@ -31,16 +31,16 @@ export default function HRDashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
-    await api.post('/recruitment/jobs/', form)
+    const { data } = await api.post('/recruitment/jobs/', form)
     setForm(EMPTY_JOB)
     setShowForm(false)
     setSaving(false)
-    loadJobs()
+    setJobs((js) => [data, ...js])
   }
 
   const toggleStatus = async (job) => {
-    await api.patch(`/recruitment/jobs/${job.id}/`, { status: job.status === 'open' ? 'closed' : 'open' })
-    loadJobs()
+    const { data } = await api.patch(`/recruitment/jobs/${job.id}/`, { status: job.status === 'open' ? 'closed' : 'open' })
+    setJobs((js) => js.map((j) => (j.id === job.id ? data : j)))
   }
 
   return (

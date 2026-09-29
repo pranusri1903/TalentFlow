@@ -65,10 +65,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        # Supabase's transaction pooler (pgbouncer) manages pooling itself, and each
-        # statement can land on a different backend connection, so Django shouldn't
-        # hold its own long-lived connections or use server-side cursors.
-        conn_max_age=0,
+        # Supabase's transaction pooler (pgbouncer) is designed to hold many
+        # persistent client connections cheaply and multiplex them onto a small
+        # pool of real Postgres backends itself, so Django is safe to reuse its
+        # connection across requests here (unlike the session pooler, which caps
+        # concurrent clients at 15). Reusing the connection avoids paying a full
+        # TCP+TLS handshake to Supabase (hosted in ap-southeast-2) on every request.
+        conn_max_age=60,
     )
 }
 if 'postgres' in DATABASES['default'].get('ENGINE', ''):

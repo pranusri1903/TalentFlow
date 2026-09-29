@@ -27,8 +27,8 @@ export default function JobApplicantsPage() {
   }, [jobId])
 
   const updateStatus = async (appId, status) => {
-    await api.patch(`/recruitment/applications/${appId}/status/`, { status })
-    load()
+    const { data } = await api.patch(`/recruitment/applications/${appId}/status/`, { status })
+    setApplications((as) => as.map((a) => (a.id === appId ? data : a)))
   }
 
   return (

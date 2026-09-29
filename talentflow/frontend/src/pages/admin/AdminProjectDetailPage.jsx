@@ -48,49 +48,48 @@ export default function AdminProjectDetailPage() {
   }, [id])
 
   const updateManager = async (employeeId) => {
-    await api.patch(`/projects/projects/${id}/`, { manager: employeeId || null })
-    loadProject()
+    const { data } = await api.patch(`/projects/projects/${id}/`, { manager: employeeId || null })
+    setProject(data)
   }
 
   const toggleMember = async (employeeId) => {
     const members = project.members.includes(employeeId)
       ? project.members.filter((m) => m !== employeeId)
       : [...project.members, employeeId]
-    await api.patch(`/projects/projects/${id}/`, { members })
-    loadProject()
-    loadAssignedElsewhere()
+    const { data } = await api.patch(`/projects/projects/${id}/`, { members })
+    setProject(data)
   }
 
   const createTask = async (e) => {
     e.preventDefault()
-    await api.post(`/projects/projects/${id}/tasks/`, { ...taskForm, sprint: taskForm.sprint || null })
+    const { data } = await api.post(`/projects/projects/${id}/tasks/`, { ...taskForm, sprint: taskForm.sprint || null })
     setTaskForm({ title: '', description: '', assignees: [], sprint: '' })
-    loadTasks()
+    setTasks((ts) => [...ts, data])
   }
 
   const createSprint = async (e) => {
     e.preventDefault()
-    await api.post(`/projects/projects/${id}/sprints/`, sprintForm)
+    const { data } = await api.post(`/projects/projects/${id}/sprints/`, sprintForm)
     setSprintForm({ name: '', start_date: '', end_date: '' })
     setShowSprintForm(false)
-    loadSprints()
+    setSprints((ss) => [...ss, data])
   }
 
   const updateSprintStatus = async (sprintId, status) => {
-    await api.patch(`/projects/sprints/${sprintId}/`, { status })
-    loadSprints()
+    const { data } = await api.patch(`/projects/sprints/${sprintId}/`, { status })
+    setSprints((ss) => ss.map((s) => (s.id === sprintId ? data : s)))
   }
 
   const deleteSprint = async (sprintId) => {
     await api.delete(`/projects/sprints/${sprintId}/`)
-    loadSprints()
+    setSprints((ss) => ss.filter((s) => s.id !== sprintId))
     loadTasks()
     if (sprintFilter === String(sprintId)) setSprintFilter('all')
   }
 
   const updateTaskSprint = async (taskId, sprintId) => {
-    await api.patch(`/projects/tasks/${taskId}/`, { sprint: sprintId })
-    loadTasks()
+    const { data } = await api.patch(`/projects/tasks/${taskId}/`, { sprint: sprintId })
+    setTasks((ts) => ts.map((t) => (t.id === taskId ? data : t)))
   }
 
   const toggleTaskAssignee = (employeeId) => {
@@ -103,8 +102,8 @@ export default function AdminProjectDetailPage() {
   }
 
   const updateTaskStatus = async (taskId, status) => {
-    await api.patch(`/projects/tasks/${taskId}/status/`, { status })
-    loadTasks()
+    const { data } = await api.patch(`/projects/tasks/${taskId}/status/`, { status })
+    setTasks((ts) => ts.map((t) => (t.id === taskId ? data : t)))
   }
 
   if (!project) return <Spinner />

@@ -44,18 +44,19 @@ export default function EmployeeDashboard() {
     e.preventDefault()
     setLeaveError('')
     try {
-      await api.post('/employees/me/leave/', leaveForm)
+      const { data } = await api.post('/employees/me/leave/', leaveForm)
       setLeaveForm(EMPTY_LEAVE_FORM)
       setShowLeaveForm(false)
-      loadLeave()
+      setLeaveRequests((rs) => [data, ...rs])
+      api.get('/employees/me/leave/balance/').then(({ data }) => setLeaveBalance(data))
     } catch (err) {
       setLeaveError(Object.values(err.response?.data || {}).flat().join(' ') || 'Could not submit request.')
     }
   }
 
   const updateTaskStatus = async (taskId, status) => {
-    await api.patch(`/projects/tasks/${taskId}/status/`, { status })
-    loadTasks()
+    const { data } = await api.patch(`/projects/tasks/${taskId}/status/`, { status })
+    setTasks((ts) => ts.map((t) => (t.id === taskId ? data : t)))
   }
 
   const usedPct = leaveBalance ? Math.round((leaveBalance.used / leaveBalance.allowance) * 100) : 0

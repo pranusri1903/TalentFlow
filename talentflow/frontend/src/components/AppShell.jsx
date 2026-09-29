@@ -13,13 +13,13 @@ export default function AppShell({ children }) {
   const initial = (profile?.full_name || profile?.email || '?')[0].toUpperCase()
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="h-screen bg-slate-50 flex overflow-hidden">
       {mobileOpen && (
         <div className="fixed inset-0 bg-slate-900/50 z-30 md:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-200 ${
+        className={`fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 transition-transform duration-200 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
       >
@@ -65,15 +65,15 @@ export default function AppShell({ children }) {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-20">
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
+        <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 z-20">
           <button className="md:hidden text-slate-600" onClick={() => setMobileOpen(true)}>
             <Menu size={22} />
           </button>
           <div className="flex-1" />
           {profile && <NotificationBell />}
         </header>
-        <main className="flex-1 px-4 md:px-8 py-8">
+        <main className="flex-1 px-4 md:px-8 py-8 overflow-y-auto">
           <div className="max-w-6xl mx-auto">{children}</div>
         </main>
       </div>

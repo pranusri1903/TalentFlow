@@ -85,10 +85,10 @@ export default function AdminDashboard() {
     setSaving(true)
     setError('')
     try {
-      await api.post('/accounts/users/', form)
+      const { data } = await api.post('/accounts/users/', form)
       setForm(EMPTY_FORM)
       setShowForm(false)
-      loadUsers()
+      setUsers((us) => [data, ...us])
     } catch (err) {
       setError(err.response?.data?.detail || 'Could not create user.')
     } finally {
@@ -98,8 +98,8 @@ export default function AdminDashboard() {
 
   const updateUser = async (id, patch) => {
     try {
-      await api.patch(`/accounts/users/${id}/`, patch)
-      loadUsers()
+      const { data } = await api.patch(`/accounts/users/${id}/`, patch)
+      setUsers((us) => us.map((u) => (u.id === id ? data : u)))
     } catch (err) {
       alert(err.response?.data?.detail || 'Could not update user.')
     }
@@ -107,8 +107,8 @@ export default function AdminDashboard() {
 
   const updateEmployee = async (employeeId, patch) => {
     try {
-      await api.patch(`/employees/${employeeId}/`, patch)
-      loadUsers()
+      const { data } = await api.patch(`/employees/${employeeId}/`, patch)
+      setUsers((us) => us.map((u) => (u.employee_id === employeeId ? { ...u, manager_id: data.manager } : u)))
     } catch (err) {
       alert(err.response?.data?.manager?.[0] || err.response?.data?.detail || 'Could not update employee.')
     }

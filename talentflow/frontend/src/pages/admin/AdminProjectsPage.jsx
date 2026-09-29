@@ -25,11 +25,11 @@ export default function AdminProjectsPage() {
   const handleCreate = async (e) => {
     e.preventDefault()
     setSaving(true)
-    await api.post('/projects/projects/', { ...form, manager: form.manager || null })
+    const { data } = await api.post('/projects/projects/', { ...form, manager: form.manager || null })
     setForm({ name: '', description: '', manager: '' })
     setShowForm(false)
     setSaving(false)
-    loadProjects()
+    setProjects((ps) => [data, ...ps])
   }
 
   return (

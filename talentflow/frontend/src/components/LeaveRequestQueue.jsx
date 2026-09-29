@@ -22,8 +22,8 @@ export default function LeaveRequestQueue() {
   }, [filter])
 
   const decide = async (id, status) => {
-    await api.patch(`/employees/leave/${id}/decision/`, { status })
-    loadRequests()
+    const { data } = await api.patch(`/employees/leave/${id}/decision/`, { status })
+    setRequests((rs) => (filter === 'all' ? rs.map((r) => (r.id === id ? data : r)) : rs.filter((r) => r.id !== id)))
   }
 
   return (
