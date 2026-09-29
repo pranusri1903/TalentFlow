@@ -6,7 +6,7 @@ import Button from './ui/Button'
 import EmptyState from './ui/EmptyState'
 import { api } from '../lib/api'
 
-const FILTERS = ['pending', 'approved', 'rejected', 'all']
+const FILTERS = ['pending', 'approved', 'rejected', 'cancelled', 'all']
 
 export default function LeaveRequestQueue() {
   const [requests, setRequests] = useState([])

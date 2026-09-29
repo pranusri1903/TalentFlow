@@ -2,9 +2,11 @@ import { CalendarPlus, CheckSquare, FolderKanban, ListChecks, X } from 'lucide-r
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import GroupedTaskList from '../../components/GroupedTaskList'
 import KanbanBoard from '../../components/KanbanBoard'
 import LeaveRequestQueue from '../../components/LeaveRequestQueue'
 import StatusBadge from '../../components/StatusBadge'
+import TaskDetailModal from '../../components/TaskDetailModal'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -15,6 +17,12 @@ import { departmentLabel } from '../../lib/departments'
 import { api } from '../../lib/api'
 
 const EMPTY_LEAVE_FORM = { start_date: '', end_date: '', reason: '' }
+const GROUP_OPTIONS = [
+  { value: 'status', label: 'Status' },
+  { value: 'type', label: 'Type' },
+  { value: 'due_date', label: 'Due date' },
+  { value: 'sprint', label: 'Sprint' },
+]
 
 export default function EmployeeDashboard() {
   const { profile } = useAuth()
@@ -26,6 +34,8 @@ export default function EmployeeDashboard() {
   const [showLeaveForm, setShowLeaveForm] = useState(false)
   const [leaveForm, setLeaveForm] = useState(EMPTY_LEAVE_FORM)
   const [leaveError, setLeaveError] = useState('')
+  const [taskGroupBy, setTaskGroupBy] = useState('status')
+  const [openTask, setOpenTask] = useState(null)
 
   const loadTasks = () => api.get('/projects/my-tasks/').then(({ data }) => setTasks(data))
   const loadLeave = () => {
@@ -57,6 +67,12 @@ export default function EmployeeDashboard() {
   const updateTaskStatus = async (taskId, status) => {
     const { data } = await api.patch(`/projects/tasks/${taskId}/status/`, { status })
     setTasks((ts) => ts.map((t) => (t.id === taskId ? data : t)))
+  }
+
+  const cancelLeave = async (id) => {
+    const { data } = await api.patch(`/employees/me/leave/${id}/cancel/`)
+    setLeaveRequests((rs) => rs.map((r) => (r.id === id ? data : r)))
+    api.get('/employees/me/leave/balance/').then(({ data }) => setLeaveBalance(data))
   }
 
   const usedPct = leaveBalance ? Math.round((leaveBalance.used / leaveBalance.allowance) * 100) : 0
@@ -164,25 +180,59 @@ export default function EmployeeDashboard() {
                   </p>
                   <p className="text-xs text-slate-400">{r.reason}</p>
                 </div>
-                <StatusBadge status={r.status} />
+                <div className="flex items-center gap-2">
+                  {r.status === 'approved' && r.start_date > new Date().toISOString().slice(0, 10) && (
+                    <button onClick={() => cancelLeave(r.id)} className="text-xs text-red-600 hover:text-red-700 font-medium">
+                      Cancel
+                    </button>
+                  )}
+                  <StatusBadge status={r.status} />
+                </div>
               </div>
             ))}
           </div>
         )}
       </Card>
 
-      <Card title="My Tasks">
+      <Card
+        title="My Tasks"
+        action={
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-400">Group by:</span>
+            <select
+              value={taskGroupBy}
+              onChange={(e) => setTaskGroupBy(e.target.value)}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-xs"
+            >
+              {GROUP_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        }
+      >
         {tasks.length === 0 ? (
           <EmptyState icon={CheckSquare} title="No tasks assigned yet" />
-        ) : (
+        ) : taskGroupBy === 'status' ? (
           <>
             <div className="mb-4">
               <TaskStatusPieChart tasks={tasks} />
             </div>
-            <KanbanBoard tasks={tasks} onStatusChange={updateTaskStatus} />
+            <KanbanBoard tasks={tasks} onStatusChange={updateTaskStatus} onOpenTask={setOpenTask} />
           </>
+        ) : (
+          <GroupedTaskList tasks={tasks} groupBy={taskGroupBy} onOpenTask={setOpenTask} />
         )}
       </Card>
+
+      {openTask && (
+        <TaskDetailModal
+          task={openTask}
+          canEdit={false}
+          onClose={() => setOpenTask(null)}
+          onStatusChange={updateTaskStatus}
+        />
+      )}
     </div>
   )
 }

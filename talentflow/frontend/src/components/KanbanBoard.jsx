@@ -1,8 +1,11 @@
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { Expand, GripVertical } from 'lucide-react'
 
+import { priorityMeta, typeMeta } from '../lib/taskMeta'
 import { TASK_STATUSES } from '../lib/taskStatus'
+
+const isOverdue = (task) => task.due_date && task.status !== 'done' && task.due_date < new Date().toISOString().slice(0, 10)
 
 function Avatar({ name }) {
   return (
@@ -15,9 +18,12 @@ function Avatar({ name }) {
   )
 }
 
-function TaskCard({ task, sprints, onSprintChange }) {
+function TaskCard({ task, sprints, onSprintChange, onOpenTask }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
   const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 }
+  const priority = priorityMeta(task.priority)
+  const type = typeMeta(task.type)
+  const overdue = isOverdue(task)
 
   return (
     <div
@@ -29,9 +35,41 @@ function TaskCard({ task, sprints, onSprintChange }) {
     >
       <div className="flex items-start gap-1.5">
         <GripVertical size={14} className="text-slate-300 mt-0.5 shrink-0 group-hover:text-slate-400" />
-        <p className="text-sm font-medium text-slate-900 leading-snug">{task.title}</p>
+        <span
+          title={`Priority: ${priority.label}`}
+          className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+          style={{ backgroundColor: priority.color }}
+        />
+        <p className="text-sm font-medium text-slate-900 leading-snug flex-1">{task.title}</p>
+        {onOpenTask && (
+          <button
+            onClick={() => onOpenTask(task)}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-indigo-600 shrink-0"
+          >
+            <Expand size={13} />
+          </button>
+        )}
       </div>
       {task.description && <p className="text-xs text-slate-500 mt-1 ml-5 line-clamp-2">{task.description}</p>}
+
+      <div className="flex items-center flex-wrap gap-1.5 mt-2 ml-5">
+        <span title={`Type: ${type.label}`} className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${type.color}1a`, color: type.color }}>
+          {type.label}
+        </span>
+        {task.due_date && (
+          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${overdue ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>
+            {overdue ? 'Overdue: ' : 'Due '}
+            {task.due_date}
+          </span>
+        )}
+        {task.labels &&
+          task.labels.split(',').map((l) => l.trim()).filter(Boolean).map((label) => (
+            <span key={label} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600">
+              {label}
+            </span>
+          ))}
+      </div>
 
       <div className="flex items-center justify-between mt-2.5 ml-5">
         {task.assignee_names?.length > 0 ? (
@@ -71,7 +109,7 @@ function TaskCard({ task, sprints, onSprintChange }) {
   )
 }
 
-function Column({ status, tasks, sprints, onSprintChange }) {
+function Column({ status, tasks, sprints, onSprintChange, onOpenTask }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.value })
 
   return (
@@ -88,14 +126,14 @@ function Column({ status, tasks, sprints, onSprintChange }) {
       </div>
       <div className="space-y-2 min-h-[60px]">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} sprints={sprints} onSprintChange={onSprintChange} />
+          <TaskCard key={task.id} task={task} sprints={sprints} onSprintChange={onSprintChange} onOpenTask={onOpenTask} />
         ))}
       </div>
     </div>
   )
 }
 
-export default function KanbanBoard({ tasks, onStatusChange, sprints, onSprintChange }) {
+export default function KanbanBoard({ tasks, onStatusChange, sprints, onSprintChange, onOpenTask }) {
   const handleDragEnd = ({ active, over }) => {
     if (!over) return
     const task = tasks.find((t) => t.id === active.id)
@@ -112,6 +150,7 @@ export default function KanbanBoard({ tasks, onStatusChange, sprints, onSprintCh
             tasks={tasks.filter((t) => t.status === status.value)}
             sprints={sprints}
             onSprintChange={onSprintChange}
+            onOpenTask={onOpenTask}
           />
         ))}
       </div>

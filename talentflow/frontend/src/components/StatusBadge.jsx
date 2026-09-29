@@ -12,6 +12,7 @@ const COLORS = {
   done: 'bg-green-100 text-green-700',
   pending: 'bg-amber-100 text-amber-700',
   approved: 'bg-green-100 text-green-700',
+  cancelled: 'bg-slate-100 text-slate-500',
 }
 
 const DOTS = {
@@ -28,6 +29,7 @@ const DOTS = {
   done: 'bg-green-500',
   pending: 'bg-amber-500',
   approved: 'bg-green-500',
+  cancelled: 'bg-slate-400',
 }
 
 export default function StatusBadge({ status }) {

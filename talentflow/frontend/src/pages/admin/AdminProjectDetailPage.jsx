@@ -1,10 +1,11 @@
 import {
-  ArrowLeft, Check, ListChecks, Plus, ShieldCheck, Trash2, UserMinus, UserPlus, X,
+  ArrowLeft, Check, ListChecks, Plus, Search, ShieldCheck, Trash2, UserMinus, UserPlus, X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import KanbanBoard from '../../components/KanbanBoard'
+import TaskDetailModal from '../../components/TaskDetailModal'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -12,7 +13,13 @@ import EmptyState from '../../components/ui/EmptyState'
 import Spinner from '../../components/ui/Spinner'
 import { useAuth } from '../../context/AuthContext'
 import { departmentLabel } from '../../lib/departments'
+import { TASK_PRIORITIES } from '../../lib/taskMeta'
 import { api } from '../../lib/api'
+
+const EMPTY_TASK_FORM = {
+  title: '', description: '', assignees: [], sprint: '', priority: 'medium', type: 'task', due_date: '', labels: '',
+}
+const EMPTY_TASK_FILTERS = { search: '', assignee: '', priority: '', label: '' }
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams()
@@ -22,12 +29,15 @@ export default function AdminProjectDetailPage() {
   const [employees, setEmployees] = useState([])
   const [assignedElsewhere, setAssignedElsewhere] = useState(new Set())
   const [tasks, setTasks] = useState([])
-  const [taskForm, setTaskForm] = useState({ title: '', description: '', assignees: [], sprint: '' })
+  const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM)
+  const [taskFilters, setTaskFilters] = useState(EMPTY_TASK_FILTERS)
+  const [openTask, setOpenTask] = useState(null)
   const [showAddMember, setShowAddMember] = useState(false)
   const [sprints, setSprints] = useState([])
   const [showSprintForm, setShowSprintForm] = useState(false)
   const [sprintForm, setSprintForm] = useState({ name: '', start_date: '', end_date: '' })
   const [sprintFilter, setSprintFilter] = useState('all')
+  const canManage = profile?.role === 'admin' || (profile?.is_manager && project?.manager === profile.employee_id)
 
   const loadProject = () => api.get(`/projects/projects/${id}/`).then(({ data }) => setProject(data))
   const loadTasks = () => api.get(`/projects/projects/${id}/tasks/`).then(({ data }) => setTasks(data))
@@ -62,9 +72,16 @@ export default function AdminProjectDetailPage() {
 
   const createTask = async (e) => {
     e.preventDefault()
-    const { data } = await api.post(`/projects/projects/${id}/tasks/`, { ...taskForm, sprint: taskForm.sprint || null })
-    setTaskForm({ title: '', description: '', assignees: [], sprint: '' })
+    const { data } = await api.post(`/projects/projects/${id}/tasks/`, {
+      ...taskForm, sprint: taskForm.sprint || null, due_date: taskForm.due_date || null,
+    })
+    setTaskForm(EMPTY_TASK_FORM)
     setTasks((ts) => [...ts, data])
+  }
+
+  const saveTask = async (taskId, patch) => {
+    const { data } = await api.patch(`/projects/tasks/${taskId}/`, patch)
+    setTasks((ts) => ts.map((t) => (t.id === taskId ? data : t)))
   }
 
   const createSprint = async (e) => {
@@ -108,12 +125,23 @@ export default function AdminProjectDetailPage() {
 
   if (!project) return <Spinner />
 
-  const visibleTasks =
-    sprintFilter === 'all'
-      ? tasks
-      : sprintFilter === 'backlog'
-        ? tasks.filter((t) => !t.sprint)
-        : tasks.filter((t) => String(t.sprint) === sprintFilter)
+  const visibleTasks = tasks
+    .filter((t) =>
+      sprintFilter === 'all' ? true : sprintFilter === 'backlog' ? !t.sprint : String(t.sprint) === sprintFilter
+    )
+    .filter((t) => {
+      const q = taskFilters.search.trim().toLowerCase()
+      return !q || t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
+    })
+    .filter((t) => !taskFilters.assignee || t.assignees.includes(Number(taskFilters.assignee)))
+    .filter((t) => !taskFilters.priority || t.priority === taskFilters.priority)
+    .filter(
+      (t) =>
+        !taskFilters.label ||
+        t.labels?.split(',').map((l) => l.trim().toLowerCase()).includes(taskFilters.label.toLowerCase())
+    )
+
+  const allLabels = [...new Set(tasks.flatMap((t) => t.labels?.split(',').map((l) => l.trim()).filter(Boolean) || []))]
 
   return (
     <div className="space-y-6">
@@ -297,6 +325,13 @@ export default function AdminProjectDetailPage() {
               <Plus size={16} /> Add task
             </Button>
           </div>
+          <textarea
+            placeholder="Description (optional)"
+            value={taskForm.description}
+            onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            rows={2}
+          />
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-400">Sprint:</span>
             <select
@@ -313,6 +348,39 @@ export default function AdminProjectDetailPage() {
                   </option>
                 ))}
             </select>
+            <span className="text-xs text-slate-400 ml-2">Priority:</span>
+            <select
+              value={taskForm.priority}
+              onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-xs"
+            >
+              {TASK_PRIORITIES.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+            <span className="text-xs text-slate-400 ml-2">Type:</span>
+            <select
+              value={taskForm.type}
+              onChange={(e) => setTaskForm({ ...taskForm, type: e.target.value })}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-xs"
+            >
+              <option value="task">Task</option>
+              <option value="bug">Bug</option>
+              <option value="story">Story</option>
+            </select>
+            <span className="text-xs text-slate-400 ml-2">Due:</span>
+            <input
+              type="date"
+              value={taskForm.due_date}
+              onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-xs"
+            />
+            <input
+              placeholder="Labels, comma-separated"
+              value={taskForm.labels}
+              onChange={(e) => setTaskForm({ ...taskForm, labels: e.target.value })}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-xs flex-1 min-w-[140px]"
+            />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-400">Assign to:</span>
@@ -335,6 +403,52 @@ export default function AdminProjectDetailPage() {
               })}
           </div>
         </form>
+
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="relative flex-1 min-w-[160px]">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              placeholder="Search tasks..."
+              value={taskFilters.search}
+              onChange={(e) => setTaskFilters({ ...taskFilters, search: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg pl-8 pr-2 py-1.5 text-xs"
+            />
+          </div>
+          <select
+            value={taskFilters.assignee}
+            onChange={(e) => setTaskFilters({ ...taskFilters, assignee: e.target.value })}
+            className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs"
+          >
+            <option value="">All assignees</option>
+            {employees
+              .filter((emp) => project.members.includes(emp.id))
+              .map((emp) => (
+                <option key={emp.id} value={emp.id}>{emp.profile.full_name || emp.profile.email}</option>
+              ))}
+          </select>
+          <select
+            value={taskFilters.priority}
+            onChange={(e) => setTaskFilters({ ...taskFilters, priority: e.target.value })}
+            className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs"
+          >
+            <option value="">All priorities</option>
+            {TASK_PRIORITIES.map((p) => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
+          {allLabels.length > 0 && (
+            <select
+              value={taskFilters.label}
+              onChange={(e) => setTaskFilters({ ...taskFilters, label: e.target.value })}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs"
+            >
+              <option value="">All labels</option>
+              {allLabels.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          )}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <button
@@ -373,10 +487,28 @@ export default function AdminProjectDetailPage() {
             <div className="mb-4">
               <TaskStatusPieChart tasks={visibleTasks} />
             </div>
-            <KanbanBoard tasks={visibleTasks} onStatusChange={updateTaskStatus} sprints={sprints} onSprintChange={updateTaskSprint} />
+            <KanbanBoard
+              tasks={visibleTasks}
+              onStatusChange={updateTaskStatus}
+              sprints={sprints}
+              onSprintChange={updateTaskSprint}
+              onOpenTask={setOpenTask}
+            />
           </>
         )}
       </Card>
+
+      {openTask && (
+        <TaskDetailModal
+          task={openTask}
+          canEdit={canManage}
+          employees={employees.filter((emp) => project.members.includes(emp.id))}
+          sprints={sprints}
+          onClose={() => setOpenTask(null)}
+          onSave={saveTask}
+          onStatusChange={updateTaskStatus}
+        />
+      )}
     </div>
   )
 }

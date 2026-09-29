@@ -85,11 +85,35 @@ class LeaveRequestQueueView(ListAPIView):
     def get_queryset(self):
         qs = LeaveRequest.objects.select_related('employee__profile', 'employee__manager__profile')
         if self.request.user.role != Profile.ADMIN:
-            manager = Employee.objects.filter(profile=self.request.user, is_manager=True).first()
+            manager = Employee.objects.filter(profile=self.request.user, job_title__icontains='manager').first()
             qs = qs.filter(employee__manager=manager)
         qs = qs.order_by('-created_at')
         status_param = self.request.query_params.get('status')
         return qs.filter(status=status_param) if status_param else qs
+
+
+class MyLeaveCancelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        employee = Employee.objects.filter(profile=request.user).first()
+        leave_request = LeaveRequest.objects.filter(pk=pk, employee=employee).first()
+        if not leave_request:
+            return Response({'detail': 'Leave request not found.'}, status=404)
+        if leave_request.status != LeaveRequest.APPROVED:
+            return Response({'detail': 'Only an approved request can be cancelled.'}, status=400)
+        if leave_request.start_date <= timezone.now().date():
+            return Response({'detail': 'This leave has already started and can no longer be cancelled.'}, status=400)
+
+        leave_request.status = LeaveRequest.CANCELLED
+        leave_request.save(update_fields=['status'])
+        notify(
+            leave_request.decided_by,
+            f"{leave_request.employee.profile.full_name or leave_request.employee.profile.email} cancelled "
+            f"their approved leave ({leave_request.start_date} to {leave_request.end_date}).",
+            link='/admin/leave' if leave_request.decided_by and leave_request.decided_by.role == Profile.ADMIN else '/employee',
+        )
+        return Response(LeaveRequestSerializer(leave_request).data)
 
 
 class LeaveDecisionView(APIView):

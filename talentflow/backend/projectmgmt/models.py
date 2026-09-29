@@ -49,12 +49,36 @@ class Task(models.Model):
         (DONE, 'Done'),
     ]
 
+    LOW = 'low'
+    MEDIUM = 'medium'
+    HIGH = 'high'
+    URGENT = 'urgent'
+    PRIORITY_CHOICES = [
+        (LOW, 'Low'),
+        (MEDIUM, 'Medium'),
+        (HIGH, 'High'),
+        (URGENT, 'Urgent'),
+    ]
+
+    TASK = 'task'
+    BUG = 'bug'
+    STORY = 'story'
+    TYPE_CHOICES = [
+        (TASK, 'Task'),
+        (BUG, 'Bug'),
+        (STORY, 'Story'),
+    ]
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     sprint = models.ForeignKey(Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     assignees = models.ManyToManyField(Employee, related_name='tasks', blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=TODO)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default=MEDIUM)
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default=TASK)
+    due_date = models.DateField(null=True, blank=True)
+    labels = models.CharField(max_length=200, blank=True, help_text='Comma-separated')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
