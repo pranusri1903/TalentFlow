@@ -1,6 +1,9 @@
+import { Check, ClipboardList, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import StatusBadge from './StatusBadge'
+import Button from './ui/Button'
+import EmptyState from './ui/EmptyState'
 import { api } from '../lib/api'
 
 const FILTERS = ['pending', 'approved', 'rejected', 'all']
@@ -30,8 +33,8 @@ export default function LeaveRequestQueue() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`text-sm px-3 py-1.5 rounded-full border capitalize ${
-              filter === f ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600'
+            className={`text-sm px-3 py-1.5 rounded-full border capitalize transition ${
+              filter === f ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
             }`}
           >
             {f}
@@ -40,7 +43,7 @@ export default function LeaveRequestQueue() {
       </div>
 
       {requests.length === 0 ? (
-        <p className="text-slate-500 mt-6 text-sm">No {filter !== 'all' && filter} leave requests.</p>
+        <EmptyState icon={ClipboardList} title={`No ${filter !== 'all' ? filter : ''} leave requests`} />
       ) : (
         <div className="mt-4 space-y-3">
           {requests.map((r) => (
@@ -57,18 +60,12 @@ export default function LeaveRequestQueue() {
               </div>
               {r.status === 'pending' && (
                 <div className="flex items-center gap-3 mt-3">
-                  <button
-                    onClick={() => decide(r.id, 'approved')}
-                    className="text-sm bg-green-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-green-700"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => decide(r.id, 'rejected')}
-                    className="text-sm bg-red-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-red-700"
-                  >
-                    Reject
-                  </button>
+                  <Button variant="success" size="sm" onClick={() => decide(r.id, 'approved')}>
+                    <Check size={14} /> Approve
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => decide(r.id, 'rejected')}>
+                    <X size={14} /> Reject
+                  </Button>
                 </div>
               )}
             </div>

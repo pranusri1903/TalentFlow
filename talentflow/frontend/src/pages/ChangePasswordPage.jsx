@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import AuthLayout from '../components/AuthLayout'
+import Button from '../components/ui/Button'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { supabase } from '../lib/supabase'
@@ -43,12 +44,9 @@ export default function ChangePasswordPage() {
           className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
         {error && <p className="text-red-600 text-sm">{error}</p>}
-        <button
-          disabled={loading}
-          className="w-full bg-indigo-600 text-white rounded-lg py-2.5 font-medium hover:bg-indigo-700 disabled:opacity-50"
-        >
+        <Button disabled={loading} className="w-full py-2.5">
           {loading ? 'Saving...' : 'Save password and continue'}
-        </button>
+        </Button>
       </form>
     </AuthLayout>
   )

@@ -1,3 +1,4 @@
+import { CalendarPlus, CheckSquare, FolderKanban, ListChecks, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -5,6 +6,10 @@ import KanbanBoard from '../../components/KanbanBoard'
 import LeaveRequestQueue from '../../components/LeaveRequestQueue'
 import StatusBadge from '../../components/StatusBadge'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import EmptyState from '../../components/ui/EmptyState'
+import PageHeader from '../../components/ui/PageHeader'
 import { useAuth } from '../../context/AuthContext'
 import { departmentLabel } from '../../lib/departments'
 import { api } from '../../lib/api'
@@ -53,31 +58,31 @@ export default function EmployeeDashboard() {
     loadTasks()
   }
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <h1 className="text-2xl font-bold text-slate-900">Welcome, {profile?.full_name || profile?.email}</h1>
-        {employee ? (
-          <p className="text-slate-500 mt-1">
-            {employee.job_title || 'Employee'} {employee.department && `· ${departmentLabel(employee.department)}`}
-            {employee.manager_name && ` · Reports to ${employee.manager_name}`}
-          </p>
-        ) : (
-          <p className="text-slate-400 mt-1 text-sm">Your employee profile is being set up by admin.</p>
-        )}
-      </div>
+  const usedPct = leaveBalance ? Math.round((leaveBalance.used / leaveBalance.allowance) * 100) : 0
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <h2 className="font-semibold text-slate-900 mb-3">My Projects</h2>
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={`Welcome, ${profile?.full_name || profile?.email}`}
+        subtitle={
+          employee
+            ? `${employee.job_title || 'Employee'}${employee.department ? ` · ${departmentLabel(employee.department)}` : ''}${
+                employee.manager_name ? ` · Reports to ${employee.manager_name}` : ''
+              }`
+            : 'Your employee profile is being set up by admin.'
+        }
+      />
+
+      <Card title="My Projects">
         {projects.length === 0 ? (
-          <p className="text-slate-500 text-sm">You're not assigned to any project yet.</p>
+          <EmptyState icon={FolderKanban} title="You're not assigned to any project yet" />
         ) : (
           <div className="flex flex-wrap gap-2">
             {projects.map((p) => (
-              <span key={p.id} className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1 rounded-full flex items-center gap-2">
+              <span key={p.id} className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
                 {p.name}
                 {employee?.is_manager && p.manager === employee.id && (
-                  <Link to={`/admin/projects/${p.id}`} className="text-indigo-900 underline">
+                  <Link to={`/admin/projects/${p.id}`} className="text-indigo-900 underline font-medium">
                     Manage
                   </Link>
                 )}
@@ -85,29 +90,34 @@ export default function EmployeeDashboard() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {employee?.is_manager && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
-          <h2 className="font-semibold text-slate-900 mb-3">Team Leave Requests</h2>
+        <Card title="Team Leave Requests">
           <LeaveRequestQueue />
-        </div>
+        </Card>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-semibold text-slate-900">Leave</h2>
-          <button
-            onClick={() => setShowLeaveForm((s) => !s)}
-            className="text-sm bg-indigo-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-indigo-700"
-          >
-            {showLeaveForm ? 'Close' : '+ Request leave'}
-          </button>
-        </div>
+      <Card
+        title="Leave"
+        action={
+          <Button size="sm" onClick={() => setShowLeaveForm((s) => !s)}>
+            {showLeaveForm ? <X size={14} /> : <CalendarPlus size={14} />}
+            {showLeaveForm ? 'Close' : 'Request leave'}
+          </Button>
+        }
+      >
         {leaveBalance && (
-          <p className="text-sm text-slate-500 mb-3">
-            {leaveBalance.remaining} of {leaveBalance.allowance} days remaining this year
-          </p>
+          <div className="mb-4">
+            <div className="flex items-baseline justify-between text-sm mb-1.5">
+              <span className="text-slate-500">
+                <span className="text-slate-900 font-semibold">{leaveBalance.remaining}</span> of {leaveBalance.allowance} days remaining
+              </span>
+            </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${usedPct}%` }} />
+            </div>
+          </div>
         )}
 
         {showLeaveForm && (
@@ -118,14 +128,14 @@ export default function EmployeeDashboard() {
                 type="date"
                 value={leaveForm.start_date}
                 onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })}
-                className="border border-slate-300 rounded-lg px-3 py-2"
+                className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <input
                 required
                 type="date"
                 value={leaveForm.end_date}
                 onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
-                className="border border-slate-300 rounded-lg px-3 py-2"
+                className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <textarea
@@ -134,17 +144,15 @@ export default function EmployeeDashboard() {
               value={leaveForm.reason}
               onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
               rows={2}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             {leaveError && <p className="text-red-600 text-sm">{leaveError}</p>}
-            <button className="bg-indigo-600 text-white rounded-lg px-4 py-2 font-medium hover:bg-indigo-700">
-              Submit request
-            </button>
+            <Button>Submit request</Button>
           </form>
         )}
 
         {leaveRequests.length === 0 ? (
-          <p className="text-slate-500 text-sm">No leave requests yet.</p>
+          <EmptyState icon={ListChecks} title="No leave requests yet" />
         ) : (
           <div className="space-y-2">
             {leaveRequests.map((r) => (
@@ -160,12 +168,11 @@ export default function EmployeeDashboard() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <h2 className="font-semibold text-slate-900 mb-3">My Tasks</h2>
+      <Card title="My Tasks">
         {tasks.length === 0 ? (
-          <p className="text-slate-500 text-sm">No tasks assigned yet.</p>
+          <EmptyState icon={CheckSquare} title="No tasks assigned yet" />
         ) : (
           <>
             <div className="mb-4">
@@ -174,7 +181,7 @@ export default function EmployeeDashboard() {
             <KanbanBoard tasks={tasks} onStatusChange={updateTaskStatus} />
           </>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

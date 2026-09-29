@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import AuthLayout from '../components/AuthLayout'
 import GoogleIcon from '../components/GoogleIcon'
+import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
 
 export default function SignupPage() {
@@ -86,12 +87,9 @@ export default function SignupPage() {
           className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
         {error && <p className="text-red-600 text-sm">{error}</p>}
-        <button
-          disabled={loading}
-          className="w-full bg-indigo-600 text-white rounded-lg py-2.5 font-medium hover:bg-indigo-700 disabled:opacity-50"
-        >
+        <Button disabled={loading} className="w-full py-2.5">
           {loading ? 'Creating account...' : 'Create account'}
-        </button>
+        </Button>
       </form>
 
       <p className="text-sm text-slate-500 mt-6 text-center">

@@ -1,9 +1,10 @@
 import LeaveRequestQueue from '../../components/LeaveRequestQueue'
+import PageHeader from '../../components/ui/PageHeader'
 
 export default function AdminLeaveRequestsPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900 mb-4">Leave Requests</h1>
+    <div>
+      <PageHeader title="Leave Requests" subtitle="Review and decide on time-off requests" />
       <LeaveRequestQueue />
     </div>
   )

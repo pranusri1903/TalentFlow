@@ -1,7 +1,11 @@
+import { ArrowLeft, FileText, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import StatusBadge from '../../components/StatusBadge'
+import EmptyState from '../../components/ui/EmptyState'
+import PageHeader from '../../components/ui/PageHeader'
+import Spinner from '../../components/ui/Spinner'
 import { useAuth } from '../../context/AuthContext'
 import { api } from '../../lib/api'
 
@@ -28,20 +32,20 @@ export default function JobApplicantsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <button onClick={() => navigate(-1)} className="text-sm text-slate-500 hover:text-indigo-600 mb-4">
-        ← Back to jobs
+    <div className="max-w-4xl mx-auto">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 mb-4">
+        <ArrowLeft size={16} /> Back to jobs
       </button>
-      <h1 className="text-2xl font-bold text-slate-900">Applicants</h1>
+      <PageHeader title="Applicants" />
 
       {loading ? (
-        <p className="text-slate-500 mt-8">Loading...</p>
+        <Spinner />
       ) : applications.length === 0 ? (
-        <p className="text-slate-500 mt-8">No applications yet.</p>
+        <EmptyState icon={UserX} title="No applications yet" />
       ) : (
-        <div className="mt-6 space-y-3">
+        <div className="space-y-3">
           {applications.map((app) => (
-            <div key={app.id} className="bg-white border border-slate-200 rounded-xl p-4">
+            <div key={app.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm shadow-slate-200/60 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-slate-900">{app.candidate.full_name || app.candidate.email}</p>
@@ -51,8 +55,8 @@ export default function JobApplicantsPage() {
               </div>
               {app.cover_letter && <p className="text-sm text-slate-600 mt-2">{app.cover_letter}</p>}
               <div className="flex items-center flex-wrap gap-2 mt-3">
-                <a href={app.resume} target="_blank" rel="noreferrer" className="text-sm text-indigo-600 font-medium">
-                  View resume
+                <a href={app.resume} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-indigo-600 font-medium hover:text-indigo-700">
+                  <FileText size={15} /> View resume
                 </a>
                 {app.status === 'hired' ? (
                   <span className="ml-auto text-sm text-slate-400">Status locked</span>

@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import Navbar from './components/Navbar'
+import AppShell from './components/AppShell'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -34,15 +34,6 @@ function RedirectIfAuthed({ children }) {
   return children
 }
 
-function Layout({ children }) {
-  return (
-    <div className="min-h-screen">
-      <Navbar />
-      {children}
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <Routes>
@@ -51,19 +42,19 @@ export default function App() {
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/" element={<RootRedirect />} />
 
-      <Route path="/jobs" element={<ProtectedRoute roles={['candidate']}><Layout><JobsListPage /></Layout></ProtectedRoute>} />
-      <Route path="/jobs/:id" element={<ProtectedRoute roles={['candidate']}><Layout><JobDetailPage /></Layout></ProtectedRoute>} />
-      <Route path="/my-applications" element={<ProtectedRoute roles={['candidate']}><Layout><MyApplicationsPage /></Layout></ProtectedRoute>} />
+      <Route path="/jobs" element={<ProtectedRoute roles={['candidate']}><AppShell><JobsListPage /></AppShell></ProtectedRoute>} />
+      <Route path="/jobs/:id" element={<ProtectedRoute roles={['candidate']}><AppShell><JobDetailPage /></AppShell></ProtectedRoute>} />
+      <Route path="/my-applications" element={<ProtectedRoute roles={['candidate']}><AppShell><MyApplicationsPage /></AppShell></ProtectedRoute>} />
 
-      <Route path="/hr" element={<ProtectedRoute roles={['hr', 'admin']}><Layout><HRDashboard /></Layout></ProtectedRoute>} />
-      <Route path="/hr/jobs/:jobId/applicants" element={<ProtectedRoute roles={['hr', 'admin']}><Layout><JobApplicantsPage /></Layout></ProtectedRoute>} />
+      <Route path="/hr" element={<ProtectedRoute roles={['hr', 'admin']}><AppShell><HRDashboard /></AppShell></ProtectedRoute>} />
+      <Route path="/hr/jobs/:jobId/applicants" element={<ProtectedRoute roles={['hr', 'admin']}><AppShell><JobApplicantsPage /></AppShell></ProtectedRoute>} />
 
-      <Route path="/employee" element={<ProtectedRoute roles={['employee']}><Layout><EmployeeDashboard /></Layout></ProtectedRoute>} />
+      <Route path="/employee" element={<ProtectedRoute roles={['employee']}><AppShell><EmployeeDashboard /></AppShell></ProtectedRoute>} />
 
-      <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
-      <Route path="/admin/projects" element={<ProtectedRoute roles={['admin']}><Layout><AdminProjectsPage /></Layout></ProtectedRoute>} />
-      <Route path="/admin/projects/:id" element={<ProtectedRoute roles={['admin']} allowManagers><Layout><AdminProjectDetailPage /></Layout></ProtectedRoute>} />
-      <Route path="/admin/leave" element={<ProtectedRoute roles={['admin']}><Layout><AdminLeaveRequestsPage /></Layout></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AppShell><AdminDashboard /></AppShell></ProtectedRoute>} />
+      <Route path="/admin/projects" element={<ProtectedRoute roles={['admin']}><AppShell><AdminProjectsPage /></AppShell></ProtectedRoute>} />
+      <Route path="/admin/projects/:id" element={<ProtectedRoute roles={['admin']} allowManagers><AppShell><AdminProjectDetailPage /></AppShell></ProtectedRoute>} />
+      <Route path="/admin/leave" element={<ProtectedRoute roles={['admin']}><AppShell><AdminLeaveRequestsPage /></AppShell></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

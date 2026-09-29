@@ -8,6 +8,7 @@ from .models import Employee, LeaveRequest
 class EmployeeSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
     manager_name = serializers.CharField(source='manager.profile.full_name', read_only=True, default='')
+    is_manager = serializers.ReadOnlyField()
 
     class Meta:
         model = Employee
@@ -19,14 +20,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 class EmployeeUpdateSerializer(serializers.ModelSerializer):
     # job_title/department are edited via accounts.UserDetailView instead, since changing
-    # department there also keeps Profile.role (hr vs employee) in sync.
+    # department there also keeps Profile.role (hr vs employee) in sync. is_manager is derived
+    # from job_title (see Employee.is_manager), not settable on its own.
     class Meta:
         model = Employee
-        fields = ['manager', 'is_manager', 'status']
+        fields = ['manager', 'status']
 
     def validate_manager(self, manager):
         if manager and not manager.is_manager:
-            raise serializers.ValidationError('Selected employee is not marked as a manager.')
+            raise serializers.ValidationError('Selected employee\'s designation does not include "Manager".')
         return manager
 
 

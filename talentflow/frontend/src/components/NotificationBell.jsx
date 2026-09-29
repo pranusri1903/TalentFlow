@@ -1,3 +1,4 @@
+import { Bell, BellOff } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -51,27 +52,30 @@ export default function NotificationBell() {
 
   return (
     <div ref={containerRef} className="relative">
-      <button onClick={toggleOpen} className="relative text-slate-500 hover:text-indigo-600 text-lg">
-        🔔
+      <button onClick={toggleOpen} className="relative text-slate-500 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+        <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+          <span className="absolute top-0.5 right-0.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg z-20 max-h-96 overflow-y-auto">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
+        <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-lg shadow-slate-200/60 z-20 max-h-96 overflow-y-auto">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <span className="text-sm font-semibold text-slate-900">Notifications</span>
             {notifications.some((n) => !n.is_read) && (
-              <button onClick={markAllRead} className="text-xs text-indigo-600 font-medium">
+              <button onClick={markAllRead} className="text-xs text-indigo-600 font-medium hover:text-indigo-700">
                 Mark all read
               </button>
             )}
           </div>
           {notifications.length === 0 ? (
-            <p className="text-sm text-slate-400 px-4 py-6 text-center">No notifications yet.</p>
+            <div className="text-center py-8">
+              <BellOff className="w-7 h-7 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
+              <p className="text-sm text-slate-400">No notifications yet</p>
+            </div>
           ) : (
             notifications.map((n) => (
               <button

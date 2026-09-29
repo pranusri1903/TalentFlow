@@ -1,5 +1,9 @@
+import { Ban, CheckCircle2, Plus, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import PageHeader from '../../components/ui/PageHeader'
 import { DEPARTMENTS } from '../../lib/departments'
 import { api } from '../../lib/api'
 
@@ -113,77 +117,86 @@ export default function AdminDashboard() {
   const managers = users.filter((u) => u.is_manager)
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Users</h1>
-        <button
-          onClick={() => setShowForm((s) => !s)}
-          className="bg-indigo-600 text-white rounded-lg px-4 py-2 font-medium hover:bg-indigo-700"
-        >
-          {showForm ? 'Cancel' : '+ Create account'}
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Users"
+        subtitle="Manage accounts, roles, and reporting lines"
+        action={
+          <Button onClick={() => setShowForm((s) => !s)}>
+            {showForm ? <X size={16} /> : <Plus size={16} />}
+            {showForm ? 'Cancel' : 'Create account'}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white border border-slate-200 rounded-xl p-6 mt-6 space-y-3">
-          <p className="text-sm text-slate-500">
-            A temporary password will be emailed to this address. They'll be asked to set a new one on first login.
-          </p>
-          <input
-            required
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2"
-          />
-          <input
-            placeholder="Full name"
-            value={form.full_name}
-            onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2"
-          />
-          <select
-            value={form.account_type}
-            onChange={(e) => setForm({ ...form, account_type: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2"
-          >
-            <option value="staff">Staff</option>
-            <option value="admin">Admin</option>
-          </select>
-          {form.account_type === 'staff' && (
-            <div className="flex items-center gap-2">
-              <select
-                value={form.department}
-                onChange={(e) => setForm({ ...form, department: e.target.value, job_title: '' })}
-                className="border border-slate-300 rounded-lg px-3 py-2"
-              >
-                {DEPARTMENTS.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-              <DesignationField
-                department={form.department}
-                value={form.job_title}
-                onChange={(job_title) => setForm({ ...form, job_title })}
-              />
-            </div>
-          )}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          <button disabled={saving} className="bg-indigo-600 text-white rounded-lg px-5 py-2.5 font-medium hover:bg-indigo-700 disabled:opacity-50">
-            {saving ? 'Creating...' : 'Create account'}
-          </button>
-        </form>
+        <Card className="mb-6">
+          <form onSubmit={handleCreate} className="space-y-3">
+            <p className="text-sm text-slate-500">
+              A temporary password will be emailed to this address. They'll be asked to set a new one on first login.
+            </p>
+            <input
+              required
+              type="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <input
+              placeholder="Full name"
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <select
+              value={form.account_type}
+              onChange={(e) => setForm({ ...form, account_type: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+            {form.account_type === 'staff' && (
+              <div className="flex items-center gap-2">
+                <select
+                  value={form.department}
+                  onChange={(e) => setForm({ ...form, department: e.target.value, job_title: '' })}
+                  className="border border-slate-300 rounded-lg px-3 py-2"
+                >
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+                <DesignationField
+                  department={form.department}
+                  value={form.job_title}
+                  onChange={(job_title) => setForm({ ...form, job_title })}
+                />
+              </div>
+            )}
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+            <Button disabled={saving}>{saving ? 'Creating...' : 'Create account'}</Button>
+          </form>
+        </Card>
       )}
 
-      <div className="mt-6 space-y-3">
+      <div className="space-y-3">
         {users.map((user) => (
-          <div key={user.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <p className="font-semibold text-slate-900">{user.full_name || user.email}</p>
-              <p className="text-xs text-slate-400">{user.email}</p>
+          <div
+            key={user.id}
+            className="bg-white border border-slate-200 rounded-2xl shadow-sm shadow-slate-200/60 p-4 flex items-center justify-between gap-3 flex-wrap"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                <UserRound size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-900 truncate">{user.full_name || user.email}</p>
+                <p className="text-xs text-slate-400 truncate">{user.email}</p>
+              </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               {user.role === 'candidate' ? (
@@ -224,14 +237,9 @@ export default function AdminDashboard() {
                           onChange={(job_title) => updateUser(user.id, { job_title })}
                         />
                       )}
-                      <label className="flex items-center gap-1.5 text-sm text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={user.is_manager}
-                          onChange={(e) => updateEmployee(user.employee_id, { is_manager: e.target.checked })}
-                        />
-                        Manager
-                      </label>
+                      {user.is_manager && (
+                        <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full font-medium">Manager</span>
+                      )}
                       <select
                         value={user.manager_id || ''}
                         onChange={(e) => updateEmployee(user.employee_id, { manager: e.target.value || null })}
@@ -253,8 +261,11 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => updateUser(user.id, { is_active: !user.is_active })}
-                className={`text-sm font-medium ${user.is_active ? 'text-red-600' : 'text-green-600'}`}
+                className={`flex items-center gap-1.5 text-sm font-medium ${
+                  user.is_active ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'
+                }`}
               >
+                {user.is_active ? <Ban size={14} /> : <CheckCircle2 size={14} />}
                 {user.is_active ? 'Deactivate' : 'Activate'}
               </button>
             </div>

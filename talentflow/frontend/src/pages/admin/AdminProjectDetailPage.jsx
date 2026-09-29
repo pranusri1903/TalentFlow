@@ -1,8 +1,15 @@
+import {
+  ArrowLeft, Check, ListChecks, Plus, ShieldCheck, Trash2, UserMinus, UserPlus, X,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import KanbanBoard from '../../components/KanbanBoard'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import EmptyState from '../../components/ui/EmptyState'
+import Spinner from '../../components/ui/Spinner'
 import { useAuth } from '../../context/AuthContext'
 import { departmentLabel } from '../../lib/departments'
 import { api } from '../../lib/api'
@@ -100,7 +107,7 @@ export default function AdminProjectDetailPage() {
     loadTasks()
   }
 
-  if (!project) return <p className="p-8 text-center text-slate-500">Loading...</p>
+  if (!project) return <Spinner />
 
   const visibleTasks =
     sprintFilter === 'all'
@@ -110,16 +117,17 @@ export default function AdminProjectDetailPage() {
         : tasks.filter((t) => String(t.sprint) === sprintFilter)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-      <button onClick={() => navigate(-1)} className="text-sm text-slate-500 hover:text-indigo-600">
-        ← Back to projects
+    <div className="space-y-6">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600">
+        <ArrowLeft size={16} /> Back to projects
       </button>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <Card>
         <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
         {project.description && <p className="text-slate-500 mt-1">{project.description}</p>}
         {profile?.role === 'admin' ? (
           <div className="flex items-center gap-2 mt-3">
+            <ShieldCheck size={16} className="text-slate-400" />
             <span className="text-sm text-slate-500">Manager:</span>
             <select
               value={project.manager || ''}
@@ -137,23 +145,23 @@ export default function AdminProjectDetailPage() {
             </select>
           </div>
         ) : (
-          <p className="text-sm text-slate-500 mt-3">Manager: {project.manager_name || 'Unassigned'}</p>
+          <p className="flex items-center gap-2 text-sm text-slate-500 mt-3">
+            <ShieldCheck size={16} className="text-slate-400" /> Manager: {project.manager_name || 'Unassigned'}
+          </p>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-slate-900">Team members</h2>
-          <button
-            onClick={() => setShowAddMember((s) => !s)}
-            className="text-sm bg-indigo-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-indigo-700"
-          >
-            {showAddMember ? 'Close' : '+ Add member'}
-          </button>
-        </div>
-
+      <Card
+        title="Team members"
+        action={
+          <Button size="sm" onClick={() => setShowAddMember((s) => !s)}>
+            {showAddMember ? <X size={14} /> : <UserPlus size={14} />}
+            {showAddMember ? 'Close' : 'Add member'}
+          </Button>
+        }
+      >
         {project.members.length === 0 ? (
-          <p className="text-sm text-slate-400">No members yet.</p>
+          <EmptyState title="No members yet" />
         ) : (
           <div className="space-y-2">
             {employees
@@ -167,8 +175,8 @@ export default function AdminProjectDetailPage() {
                       {emp.job_title && ` · ${emp.job_title}`}
                     </p>
                   </div>
-                  <button onClick={() => toggleMember(emp.id)} className="text-sm text-red-600 font-medium">
-                    Remove
+                  <button onClick={() => toggleMember(emp.id)} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 font-medium">
+                    <UserMinus size={14} /> Remove
                   </button>
                 </div>
               ))}
@@ -193,8 +201,8 @@ export default function AdminProjectDetailPage() {
                           {emp.job_title && ` · ${emp.job_title}`}
                         </p>
                       </div>
-                      <button onClick={() => toggleMember(emp.id)} className="text-sm text-indigo-600 font-medium">
-                        Add
+                      <button onClick={() => toggleMember(emp.id)} className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                        <UserPlus size={14} /> Add
                       </button>
                     </div>
                   ))}
@@ -202,19 +210,17 @@ export default function AdminProjectDetailPage() {
             )}
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-slate-900">Sprints</h2>
-          <button
-            onClick={() => setShowSprintForm((s) => !s)}
-            className="text-sm bg-indigo-600 text-white rounded-lg px-3 py-1.5 font-medium hover:bg-indigo-700"
-          >
-            {showSprintForm ? 'Close' : '+ New sprint'}
-          </button>
-        </div>
-
+      <Card
+        title="Sprints"
+        action={
+          <Button size="sm" onClick={() => setShowSprintForm((s) => !s)}>
+            {showSprintForm ? <X size={14} /> : <Plus size={14} />}
+            {showSprintForm ? 'Close' : 'New sprint'}
+          </Button>
+        }
+      >
         {showSprintForm && (
           <form onSubmit={createSprint} className="grid sm:grid-cols-4 gap-2 mb-4">
             <input
@@ -222,63 +228,63 @@ export default function AdminProjectDetailPage() {
               placeholder="Sprint name"
               value={sprintForm.name}
               onChange={(e) => setSprintForm({ ...sprintForm, name: e.target.value })}
-              className="border border-slate-300 rounded-lg px-3 py-2"
+              className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <input
               required
               type="date"
               value={sprintForm.start_date}
               onChange={(e) => setSprintForm({ ...sprintForm, start_date: e.target.value })}
-              className="border border-slate-300 rounded-lg px-3 py-2"
+              className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <input
               required
               type="date"
               value={sprintForm.end_date}
               onChange={(e) => setSprintForm({ ...sprintForm, end_date: e.target.value })}
-              className="border border-slate-300 rounded-lg px-3 py-2"
+              className="border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <button className="bg-indigo-600 text-white rounded-lg px-4 py-2 font-medium hover:bg-indigo-700">
-              Create
-            </button>
+            <Button>Create</Button>
           </form>
         )}
 
         {sprints.length === 0 ? (
-          <p className="text-sm text-slate-400">No sprints yet — tasks live in the backlog until you create one.</p>
+          <EmptyState title="No sprints yet" description="Tasks live in the backlog until you create one" />
         ) : (
           <div className="space-y-2">
             {sprints.map((sprint) => (
               <div key={sprint.id} className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-slate-900">{sprint.name}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 capitalize">
                     {sprint.start_date} → {sprint.end_date} · {sprint.status}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   {sprint.status === 'planned' && (
-                    <button onClick={() => updateSprintStatus(sprint.id, 'active')} className="text-sm text-indigo-600 font-medium">
+                    <button onClick={() => updateSprintStatus(sprint.id, 'active')} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
                       Start
                     </button>
                   )}
                   {sprint.status === 'active' && (
-                    <button onClick={() => updateSprintStatus(sprint.id, 'completed')} className="text-sm text-green-600 font-medium">
-                      Complete
+                    <button
+                      onClick={() => updateSprintStatus(sprint.id, 'completed')}
+                      className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 font-medium"
+                    >
+                      <Check size={14} /> Complete
                     </button>
                   )}
-                  <button onClick={() => deleteSprint(sprint.id)} className="text-sm text-red-600 font-medium">
-                    Delete
+                  <button onClick={() => deleteSprint(sprint.id)} className="text-slate-400 hover:text-red-600">
+                    <Trash2 size={15} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <h2 className="font-semibold text-slate-900 mb-3">Tasks</h2>
+      <Card title="Tasks">
         <form onSubmit={createTask} className="space-y-2 mb-4">
           <div className="grid sm:grid-cols-3 gap-2">
             <input
@@ -286,11 +292,11 @@ export default function AdminProjectDetailPage() {
               placeholder="Task title"
               value={taskForm.title}
               onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-              className="border border-slate-300 rounded-lg px-3 py-2 sm:col-span-2"
+              className="border border-slate-300 rounded-lg px-3 py-2 sm:col-span-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <button className="bg-indigo-600 text-white rounded-lg px-4 py-2 font-medium hover:bg-indigo-700">
-              Add task
-            </button>
+            <Button>
+              <Plus size={16} /> Add task
+            </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-400">Sprint:</span>
@@ -320,8 +326,8 @@ export default function AdminProjectDetailPage() {
                     type="button"
                     key={emp.id}
                     onClick={() => toggleTaskAssignee(emp.id)}
-                    className={`text-xs px-2.5 py-1 rounded-full border ${
-                      selected ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600'
+                    className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                      selected ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
                     {emp.profile.full_name || emp.profile.email}
@@ -334,16 +340,16 @@ export default function AdminProjectDetailPage() {
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <button
             onClick={() => setSprintFilter('all')}
-            className={`text-xs px-2.5 py-1 rounded-full border ${
-              sprintFilter === 'all' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600'
+            className={`text-xs px-2.5 py-1 rounded-full border transition ${
+              sprintFilter === 'all' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
             }`}
           >
             All
           </button>
           <button
             onClick={() => setSprintFilter('backlog')}
-            className={`text-xs px-2.5 py-1 rounded-full border ${
-              sprintFilter === 'backlog' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600'
+            className={`text-xs px-2.5 py-1 rounded-full border transition ${
+              sprintFilter === 'backlog' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
             }`}
           >
             Backlog
@@ -352,8 +358,8 @@ export default function AdminProjectDetailPage() {
             <button
               key={s.id}
               onClick={() => setSprintFilter(String(s.id))}
-              className={`text-xs px-2.5 py-1 rounded-full border ${
-                sprintFilter === String(s.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600'
+              className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                sprintFilter === String(s.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
               }`}
             >
               {s.name}
@@ -361,14 +367,17 @@ export default function AdminProjectDetailPage() {
           ))}
         </div>
 
-        {visibleTasks.length > 0 && (
-          <div className="mb-4">
-            <TaskStatusPieChart tasks={visibleTasks} />
-          </div>
+        {visibleTasks.length === 0 ? (
+          <EmptyState icon={ListChecks} title="No tasks in this view" />
+        ) : (
+          <>
+            <div className="mb-4">
+              <TaskStatusPieChart tasks={visibleTasks} />
+            </div>
+            <KanbanBoard tasks={visibleTasks} onStatusChange={updateTaskStatus} sprints={sprints} onSprintChange={updateTaskSprint} />
+          </>
         )}
-
-        <KanbanBoard tasks={visibleTasks} onStatusChange={updateTaskStatus} sprints={sprints} onSprintChange={updateTaskSprint} />
-      </div>
+      </Card>
     </div>
   )
 }

@@ -1,6 +1,10 @@
+import { FileStack } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import StatusBadge from '../../components/StatusBadge'
+import EmptyState from '../../components/ui/EmptyState'
+import PageHeader from '../../components/ui/PageHeader'
+import Spinner from '../../components/ui/Spinner'
 import { api } from '../../lib/api'
 
 export default function MyApplicationsPage() {
@@ -15,19 +19,19 @@ export default function MyApplicationsPage() {
   }, [])
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900">My Applications</h1>
+    <div>
+      <PageHeader title="My Applications" />
 
       {loading ? (
-        <p className="text-slate-500 mt-8">Loading...</p>
+        <Spinner />
       ) : applications.length === 0 ? (
-        <p className="text-slate-500 mt-8">You haven't applied to any jobs yet.</p>
+        <EmptyState icon={FileStack} title="You haven't applied to any jobs yet" description="Browse open roles to get started" />
       ) : (
-        <div className="mt-6 space-y-3">
+        <div className="space-y-3">
           {applications.map((app) => (
             <div
               key={app.id}
-              className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between"
+              className="bg-white border border-slate-200 rounded-2xl shadow-sm shadow-slate-200/60 p-4 flex items-center justify-between"
             >
               <div>
                 <p className="font-semibold text-slate-900">{app.job_title}</p>
