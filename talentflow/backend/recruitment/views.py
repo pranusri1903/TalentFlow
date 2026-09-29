@@ -97,10 +97,18 @@ class ApplicationStatusUpdateView(APIView):
         serializer = ApplicationStatusUpdateSerializer(application, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
+        department = request.data.get('department', '')
+        job_title = request.data.get('job_title', '')
+        if serializer.validated_data.get('status') == Application.HIRED:
+            if department not in dict(Employee.DEPARTMENT_CHOICES):
+                return Response({'detail': 'A valid department is required to hire a candidate.'}, status=400)
+            if not job_title:
+                return Response({'detail': 'A designation is required to hire a candidate.'}, status=400)
+
         with transaction.atomic():
             serializer.save()
             if application.status == Application.HIRED:
-                self._convert_to_employee(application.candidate)
+                self._convert_to_employee(application.candidate, department, job_title)
 
         notify(
             application.candidate,
@@ -110,7 +118,10 @@ class ApplicationStatusUpdateView(APIView):
         return Response(ApplicationSerializer(application).data)
 
     @staticmethod
-    def _convert_to_employee(candidate):
-        candidate.role = Profile.EMPLOYEE
+    def _convert_to_employee(candidate, department, job_title):
+        candidate.role = Profile.HR if department == Employee.HR else Profile.EMPLOYEE
         candidate.save(update_fields=['role'])
-        Employee.objects.get_or_create(profile=candidate)
+        employee, _ = Employee.objects.get_or_create(profile=candidate)
+        employee.department = department
+        employee.job_title = job_title
+        employee.save(update_fields=['department', 'job_title'])

@@ -2,14 +2,18 @@ import { ArrowLeft, FileText, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import DesignationField from '../../components/DesignationField'
 import StatusBadge from '../../components/StatusBadge'
+import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { useAuth } from '../../context/AuthContext'
+import { DEPARTMENTS } from '../../lib/departments'
 import { api } from '../../lib/api'
 
 const STATUSES = ['applied', 'shortlisted', 'interview', 'hired', 'rejected']
+const EMPTY_HIRE_FORM = { department: '', job_title: '' }
 
 export default function JobApplicantsPage() {
   const { jobId } = useParams()
@@ -18,6 +22,9 @@ export default function JobApplicantsPage() {
   const canChangeStatus = profile?.role === 'hr'
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [hiringId, setHiringId] = useState(null)
+  const [hireForm, setHireForm] = useState(EMPTY_HIRE_FORM)
+  const [hireError, setHireError] = useState('')
 
   const load = () =>
     api.get(`/recruitment/jobs/${jobId}/applications/`).then(({ data }) => setApplications(data))
@@ -26,9 +33,28 @@ export default function JobApplicantsPage() {
     load().finally(() => setLoading(false))
   }, [jobId])
 
-  const updateStatus = async (appId, status) => {
-    const { data } = await api.patch(`/recruitment/applications/${appId}/status/`, { status })
+  const updateStatus = async (appId, status, extra = {}) => {
+    const { data } = await api.patch(`/recruitment/applications/${appId}/status/`, { status, ...extra })
     setApplications((as) => as.map((a) => (a.id === appId ? data : a)))
+  }
+
+  const startHire = (appId) => {
+    setHiringId(appId)
+    setHireForm(EMPTY_HIRE_FORM)
+    setHireError('')
+  }
+
+  const confirmHire = async (appId) => {
+    if (!hireForm.department || !hireForm.job_title) {
+      setHireError('Department and designation are both required to hire.')
+      return
+    }
+    try {
+      await updateStatus(appId, 'hired', hireForm)
+      setHiringId(null)
+    } catch (err) {
+      setHireError(err.response?.data?.detail || 'Could not hire candidate.')
+    }
   }
 
   return (
@@ -65,7 +91,7 @@ export default function JobApplicantsPage() {
                 ) : (
                   <select
                     value={app.status}
-                    onChange={(e) => updateStatus(app.id, e.target.value)}
+                    onChange={(e) => (e.target.value === 'hired' ? startHire(app.id) : updateStatus(app.id, e.target.value))}
                     className="ml-auto border border-slate-300 rounded-lg px-2 py-1 text-sm"
                   >
                     {STATUSES.map((s) => (
@@ -76,6 +102,33 @@ export default function JobApplicantsPage() {
                   </select>
                 )}
               </div>
+              {hiringId === app.id && (
+                <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                  <select
+                    value={hireForm.department}
+                    onChange={(e) => setHireForm({ department: e.target.value, job_title: '' })}
+                    className="border border-slate-300 rounded-lg px-2 py-1 text-sm"
+                  >
+                    <option value="">Department</option>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d.value} value={d.value}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                  {hireForm.department && (
+                    <DesignationField
+                      live
+                      department={hireForm.department}
+                      value={hireForm.job_title}
+                      onChange={(job_title) => setHireForm((f) => ({ ...f, job_title }))}
+                    />
+                  )}
+                  {hireError && <p className="w-full text-sm text-red-600">{hireError}</p>}
+                  <Button size="sm" onClick={() => confirmHire(app.id)}>Confirm hire</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setHiringId(null)}>Cancel</Button>
+                </div>
+              )}
             </div>
           ))}
         </div>
