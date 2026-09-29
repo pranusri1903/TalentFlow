@@ -18,11 +18,11 @@ function UserRow({ user, managers, updateUser, updateEmployee }) {
           <UserRound size={18} />
         </div>
         <div className="min-w-0">
-          <p className="font-semibold text-slate-900 truncate">{user.full_name || user.email}</p>
-          <p className="text-xs text-slate-400 truncate">
-            {user.email}
-            {user.employee_code && ` · ${user.employee_code}`}
+          <p className="font-semibold text-slate-900 truncate">
+            {user.full_name || user.email}
+            {user.employee_code && <span className="font-normal text-slate-400"> ({user.employee_code})</span>}
           </p>
+          <p className="text-xs text-slate-400 truncate">{user.email}</p>
         </div>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
@@ -107,6 +107,7 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [departmentFilter, setDepartmentFilter] = useState('')
   const [groupByDept, setGroupByDept] = useState(false)
 
   const loadUsers = () => api.get('/accounts/users/').then(({ data }) => setUsers(data))
@@ -152,9 +153,11 @@ export default function AdminDashboard() {
   const managers = users.filter((u) => u.is_manager)
 
   const q = search.trim().toLowerCase()
-  const filteredUsers = users.filter(
-    (u) => !q || u.full_name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.employee_code?.toLowerCase().includes(q)
-  )
+  const filteredUsers = users
+    .filter(
+      (u) => !q || u.full_name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.employee_code?.toLowerCase().includes(q)
+    )
+    .filter((u) => !departmentFilter || u.department === departmentFilter)
 
   const groupedByDept = groupByDept
     ? Object.entries(
@@ -244,6 +247,16 @@ export default function AdminDashboard() {
             className="w-full border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
+        <select
+          value={departmentFilter}
+          onChange={(e) => setDepartmentFilter(e.target.value)}
+          className="border border-slate-300 rounded-lg px-2 py-2 text-sm"
+        >
+          <option value="">All departments</option>
+          {DEPARTMENTS.map((d) => (
+            <option key={d.value} value={d.value}>{d.label}</option>
+          ))}
+        </select>
         <label className="flex items-center gap-1.5 text-sm text-slate-600">
           <input type="checkbox" checked={groupByDept} onChange={(e) => setGroupByDept(e.target.checked)} />
           Group by department
