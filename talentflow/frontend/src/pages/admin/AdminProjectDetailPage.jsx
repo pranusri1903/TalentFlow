@@ -135,7 +135,7 @@ export default function AdminProjectDetailPage() {
             >
               <option value="">Unassigned</option>
               {employees
-                .filter((emp) => emp.is_manager)
+                .filter((emp) => emp.is_manager && (project.members.includes(emp.id) || emp.id === project.manager))
                 .map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.profile.full_name || emp.profile.email}

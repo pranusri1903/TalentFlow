@@ -44,3 +44,33 @@ class ProjectSerializer(serializers.ModelSerializer):
         if manager and not manager.is_manager:
             raise serializers.ValidationError('Selected employee is not marked as a manager.')
         return manager
+
+    def validate(self, attrs):
+        # On update (not create — there's no team yet to check against there), a manager can
+        # only be assigned from among the project's existing/incoming members.
+        if self.instance is not None and attrs.get('manager') is not None:
+            members = attrs.get('members')
+            if members is None:
+                members = list(self.instance.members.all())
+            if attrs['manager'] not in members:
+                raise serializers.ValidationError({'manager': 'Manager must already be a member of this project.'})
+        return attrs
+
+    def create(self, validated_data):
+        manager = validated_data.get('manager')
+        instance = super().create(validated_data)
+        # A project's manager is always implicitly on its team, even if the creation form
+        # (which has no team yet to pick from) didn't include them in members.
+        if manager:
+            instance.members.add(manager)
+        return instance
+
+    def update(self, instance, validated_data):
+        members_provided = 'members' in validated_data
+        instance = super().update(instance, validated_data)
+        # If the team was just edited and no longer includes the current manager, they can no
+        # longer manage a team they're not on — clear it rather than leaving a dangling manager.
+        if members_provided and instance.manager_id and not instance.members.filter(id=instance.manager_id).exists():
+            instance.manager = None
+            instance.save(update_fields=['manager'])
+        return instance
