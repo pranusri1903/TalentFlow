@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.http import HttpResponse
 from rest_framework.generics import (
     ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView,
 )
@@ -66,10 +67,10 @@ class ApplyToJobView(APIView):
         if Application.objects.filter(job=job, candidate=request.user).exists():
             return Response({'detail': 'You already applied to this job.'}, status=400)
 
-        serializer = ApplicationSerializer(data=request.data)
+        serializer = ApplicationSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         application = serializer.save(job=job, candidate=request.user)
-        return Response(ApplicationSerializer(application).data, status=201)
+        return Response(ApplicationSerializer(application, context={'request': request}).data, status=201)
 
 
 class JobApplicationsView(ListAPIView):
@@ -80,6 +81,24 @@ class JobApplicationsView(ListAPIView):
         return Application.objects.select_related('job', 'candidate').filter(
             job_id=self.kwargs['job_id']
         ).order_by('-applied_at')
+
+
+class ApplicationResumeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        application = Application.objects.filter(pk=pk).first()
+        if not application or not application.resume_data:
+            return Response({'detail': 'Resume not found.'}, status=404)
+        is_owner = application.candidate_id == request.user.id
+        if not is_owner and request.user.role not in (Profile.HR, Profile.ADMIN):
+            return Response({'detail': 'Not allowed.'}, status=403)
+
+        response = HttpResponse(
+            bytes(application.resume_data), content_type=application.resume_content_type or 'application/octet-stream'
+        )
+        response['Content-Disposition'] = f'inline; filename="{application.resume_filename or "resume"}"'
+        return response
 
 
 class ApplicationStatusUpdateView(APIView):
@@ -109,13 +128,19 @@ class ApplicationStatusUpdateView(APIView):
             serializer.save()
             if application.status == Application.HIRED:
                 self._convert_to_employee(application.candidate, department, job_title)
+            if application.status in (Application.HIRED, Application.REJECTED) and application.resume_data:
+                # Only actively-in-pipeline candidates' resumes are worth keeping around.
+                application.resume_data = None
+                application.resume_content_type = ''
+                application.resume_filename = ''
+                application.save(update_fields=['resume_data', 'resume_content_type', 'resume_filename'])
 
         notify(
             application.candidate,
             f"Your application for '{application.job.title}' is now {application.get_status_display().lower()}.",
             link='/employee' if application.status == Application.HIRED else '/my-applications',
         )
-        return Response(ApplicationSerializer(application).data)
+        return Response(ApplicationSerializer(application, context={'request': request}).data)
 
     @staticmethod
     def _convert_to_employee(candidate, department, job_title):

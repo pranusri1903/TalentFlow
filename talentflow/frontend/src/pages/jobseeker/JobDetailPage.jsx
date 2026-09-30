@@ -27,7 +27,7 @@ export default function JobDetailPage() {
     setError('')
     setSubmitting(true)
     const formData = new FormData()
-    formData.append('resume', resume)
+    formData.append('resume_upload', resume)
     formData.append('cover_letter', coverLetter)
     try {
       await api.post(`/recruitment/jobs/${id}/apply/`, formData, {
