@@ -105,6 +105,9 @@ function TaskCard({ task, sprints, onSprintChange, onOpenTask }) {
           <p className="text-xs text-indigo-500 mt-1.5 ml-5 bg-indigo-50 inline-block px-2 py-0.5 rounded-full">{task.sprint_name}</p>
         )
       )}
+      {task.epic_name && (
+        <p className="text-xs text-purple-600 mt-1.5 ml-5 bg-purple-50 inline-block px-2 py-0.5 rounded-full">{task.epic_name}</p>
+      )}
     </div>
   )
 }

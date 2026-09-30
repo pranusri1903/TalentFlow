@@ -1,4 +1,4 @@
-import { Briefcase, CalendarDays, FileText, FolderKanban, LayoutDashboard, Users } from 'lucide-react'
+import { Briefcase, CalendarDays, FileText, FolderKanban, LayoutDashboard, Search, Users } from 'lucide-react'
 
 export const NAV_BY_ROLE = {
   candidate: [
@@ -6,10 +6,14 @@ export const NAV_BY_ROLE = {
     { to: '/my-applications', label: 'My Applications', icon: FileText },
   ],
   hr: [{ to: '/hr', label: 'Recruitment', icon: Users, end: true }],
-  employee: [{ to: '/employee', label: 'My Workspace', icon: LayoutDashboard, end: true }],
+  employee: [
+    { to: '/employee', label: 'My Workspace', icon: LayoutDashboard, end: true },
+    { to: '/search', label: 'Search', icon: Search },
+  ],
   admin: [
     { to: '/admin', label: 'Users', icon: Users, end: true },
     { to: '/admin/projects', label: 'Projects', icon: FolderKanban },
     { to: '/admin/leave', label: 'Leave', icon: CalendarDays },
+    { to: '/search', label: 'Search', icon: Search },
   ],
 }

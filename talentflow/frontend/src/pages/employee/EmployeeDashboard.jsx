@@ -24,6 +24,7 @@ const GROUP_OPTIONS = [
   { value: 'type', label: 'Type' },
   { value: 'due_date', label: 'Due date' },
   { value: 'sprint', label: 'Sprint' },
+  { value: 'epic', label: 'Epic' },
 ]
 
 export default function EmployeeDashboard() {

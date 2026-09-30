@@ -21,6 +21,7 @@ function groupTasks(tasks, groupBy) {
     let key
     if (groupBy === 'type') key = typeMeta(task.type).label
     else if (groupBy === 'due_date') key = dueBucket(task)
+    else if (groupBy === 'epic') key = task.epic_name || 'No epic'
     else key = task.sprint_name || 'Backlog'
 
     if (!groups.has(key)) {

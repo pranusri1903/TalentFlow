@@ -9,6 +9,7 @@ import AdminProjectDetailPage from './pages/admin/AdminProjectDetailPage'
 import AdminProjectsPage from './pages/admin/AdminProjectsPage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
 import EmployeeDashboard from './pages/employee/EmployeeDashboard'
+import GlobalSearchPage from './pages/GlobalSearchPage'
 import HRDashboard from './pages/hr/HRDashboard'
 import JobApplicantsPage from './pages/hr/JobApplicantsPage'
 import JobDetailPage from './pages/jobseeker/JobDetailPage'
@@ -50,6 +51,7 @@ export default function App() {
       <Route path="/hr/jobs/:jobId/applicants" element={<ProtectedRoute roles={['hr', 'admin']}><AppShell><JobApplicantsPage /></AppShell></ProtectedRoute>} />
 
       <Route path="/employee" element={<ProtectedRoute roles={['employee']}><AppShell><EmployeeDashboard /></AppShell></ProtectedRoute>} />
+      <Route path="/search" element={<ProtectedRoute roles={['employee', 'admin']}><AppShell><GlobalSearchPage /></AppShell></ProtectedRoute>} />
 
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AppShell><AdminDashboard /></AppShell></ProtectedRoute>} />
       <Route path="/admin/projects" element={<ProtectedRoute roles={['admin']}><AppShell><AdminProjectsPage /></AppShell></ProtectedRoute>} />

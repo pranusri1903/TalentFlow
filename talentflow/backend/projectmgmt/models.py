@@ -1,5 +1,6 @@
 from django.db import models
 
+from accounts.models import Profile
 from employees.models import Employee
 
 
@@ -31,6 +32,16 @@ class Sprint(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=PLANNED)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Epic(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='epics')
+    name = models.CharField(max_length=150)
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -71,6 +82,7 @@ class Task(models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     sprint = models.ForeignKey(Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
+    epic = models.ForeignKey(Epic, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     assignees = models.ManyToManyField(Employee, related_name='tasks', blank=True)
@@ -84,3 +96,30 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class TaskComment(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='+')
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.author} on {self.task}"
+
+
+class TaskActivity(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='activity')
+    actor = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, related_name='+')
+    message = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural = 'Task activity'
+
+    def __str__(self):
+        return self.message

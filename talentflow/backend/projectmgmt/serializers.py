@@ -1,16 +1,18 @@
 from rest_framework import serializers
 
-from .models import Project, Sprint, Task
+from .models import Epic, Project, Sprint, Task, TaskActivity, TaskComment
 
 
 class TaskSerializer(serializers.ModelSerializer):
     assignee_names = serializers.SerializerMethodField()
     sprint_name = serializers.CharField(source='sprint.name', read_only=True, default=None)
+    epic_name = serializers.CharField(source='epic.name', read_only=True, default=None)
+    project_name = serializers.CharField(source='project.name', read_only=True, default=None)
 
     class Meta:
         model = Task
         fields = [
-            'id', 'project', 'sprint', 'sprint_name', 'title', 'description',
+            'id', 'project', 'project_name', 'sprint', 'sprint_name', 'epic', 'epic_name', 'title', 'description',
             'assignees', 'assignee_names', 'status', 'priority', 'type', 'due_date', 'labels',
             'created_at', 'updated_at',
         ]
@@ -25,6 +27,31 @@ class SprintSerializer(serializers.ModelSerializer):
         model = Sprint
         fields = ['id', 'project', 'name', 'start_date', 'end_date', 'status', 'created_at']
         read_only_fields = ['project']
+
+
+class EpicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Epic
+        fields = ['id', 'project', 'name', 'description', 'created_at']
+        read_only_fields = ['project']
+
+
+class TaskCommentSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source='author.full_name', read_only=True, default=None)
+
+    class Meta:
+        model = TaskComment
+        fields = ['id', 'task', 'author', 'author_name', 'body', 'created_at']
+        read_only_fields = ['task', 'author', 'created_at']
+
+
+class TaskActivitySerializer(serializers.ModelSerializer):
+    actor_name = serializers.CharField(source='actor.full_name', read_only=True, default=None)
+
+    class Meta:
+        model = TaskActivity
+        fields = ['id', 'task', 'actor_name', 'message', 'created_at']
+        read_only_fields = fields
 
 
 class ProjectSerializer(serializers.ModelSerializer):

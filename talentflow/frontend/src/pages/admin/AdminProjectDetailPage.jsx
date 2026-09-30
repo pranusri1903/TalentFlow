@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import KanbanBoard from '../../components/KanbanBoard'
+import ProjectDashboard from '../../components/ProjectDashboard'
 import TaskDetailModal from '../../components/TaskDetailModal'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
 import Button from '../../components/ui/Button'
@@ -17,9 +18,10 @@ import { TASK_PRIORITIES } from '../../lib/taskMeta'
 import { api } from '../../lib/api'
 
 const EMPTY_TASK_FORM = {
-  title: '', description: '', assignees: [], sprint: '', priority: 'medium', type: 'task', due_date: '', labels: '',
+  title: '', description: '', assignees: [], sprint: '', epic: '', priority: 'medium', type: 'task', due_date: '', labels: '',
 }
-const EMPTY_TASK_FILTERS = { search: '', assignee: '', priority: '', label: '' }
+const EMPTY_TASK_FILTERS = { search: '', assignee: '', priority: '', label: '', epic: '' }
+const EMPTY_EPIC_FORM = { name: '', description: '' }
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams()
@@ -37,11 +39,15 @@ export default function AdminProjectDetailPage() {
   const [showSprintForm, setShowSprintForm] = useState(false)
   const [sprintForm, setSprintForm] = useState({ name: '', start_date: '', end_date: '' })
   const [sprintFilter, setSprintFilter] = useState('all')
+  const [epics, setEpics] = useState([])
+  const [showEpicForm, setShowEpicForm] = useState(false)
+  const [epicForm, setEpicForm] = useState(EMPTY_EPIC_FORM)
   const canManage = profile?.role === 'admin' || (profile?.is_manager && project?.manager === profile.employee_id)
 
   const loadProject = () => api.get(`/projects/projects/${id}/`).then(({ data }) => setProject(data))
   const loadTasks = () => api.get(`/projects/projects/${id}/tasks/`).then(({ data }) => setTasks(data))
   const loadSprints = () => api.get(`/projects/projects/${id}/sprints/`).then(({ data }) => setSprints(data))
+  const loadEpics = () => api.get(`/projects/projects/${id}/epics/`).then(({ data }) => setEpics(data))
 
   const loadAssignedElsewhere = () =>
     api.get('/projects/projects/').then(({ data }) => {
@@ -53,6 +59,7 @@ export default function AdminProjectDetailPage() {
     loadProject()
     loadTasks()
     loadSprints()
+    loadEpics()
     loadAssignedElsewhere()
     api.get('/employees/').then(({ data }) => setEmployees(data))
   }, [id])
@@ -73,10 +80,24 @@ export default function AdminProjectDetailPage() {
   const createTask = async (e) => {
     e.preventDefault()
     const { data } = await api.post(`/projects/projects/${id}/tasks/`, {
-      ...taskForm, sprint: taskForm.sprint || null, due_date: taskForm.due_date || null,
+      ...taskForm, sprint: taskForm.sprint || null, epic: taskForm.epic || null, due_date: taskForm.due_date || null,
     })
     setTaskForm(EMPTY_TASK_FORM)
     setTasks((ts) => [...ts, data])
+  }
+
+  const createEpic = async (e) => {
+    e.preventDefault()
+    const { data } = await api.post(`/projects/projects/${id}/epics/`, epicForm)
+    setEpicForm(EMPTY_EPIC_FORM)
+    setShowEpicForm(false)
+    setEpics((es) => [...es, data])
+  }
+
+  const deleteEpic = async (epicId) => {
+    await api.delete(`/projects/epics/${epicId}/`)
+    setEpics((es) => es.filter((e) => e.id !== epicId))
+    loadTasks()
   }
 
   const saveTask = async (taskId, patch) => {
@@ -140,6 +161,7 @@ export default function AdminProjectDetailPage() {
         !taskFilters.label ||
         t.labels?.split(',').map((l) => l.trim().toLowerCase()).includes(taskFilters.label.toLowerCase())
     )
+    .filter((t) => !taskFilters.epic || String(t.epic) === taskFilters.epic)
 
   const allLabels = [...new Set(tasks.flatMap((t) => t.labels?.split(',').map((l) => l.trim()).filter(Boolean) || []))]
 
@@ -311,6 +333,53 @@ export default function AdminProjectDetailPage() {
         )}
       </Card>
 
+      <Card
+        title="Epics"
+        action={
+          <Button size="sm" onClick={() => setShowEpicForm((s) => !s)}>
+            {showEpicForm ? <X size={14} /> : <Plus size={14} />}
+            {showEpicForm ? 'Close' : 'New epic'}
+          </Button>
+        }
+      >
+        {showEpicForm && (
+          <form onSubmit={createEpic} className="grid sm:grid-cols-3 gap-2 mb-4">
+            <input
+              required
+              placeholder="Epic name"
+              value={epicForm.name}
+              onChange={(e) => setEpicForm({ ...epicForm, name: e.target.value })}
+              className="border border-slate-300 rounded-lg px-3 py-2 sm:col-span-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <Button>Create</Button>
+            <input
+              placeholder="Description (optional)"
+              value={epicForm.description}
+              onChange={(e) => setEpicForm({ ...epicForm, description: e.target.value })}
+              className="border border-slate-300 rounded-lg px-3 py-2 sm:col-span-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </form>
+        )}
+
+        {epics.length === 0 ? (
+          <EmptyState title="No epics yet" description="Group related tasks under a bigger initiative" />
+        ) : (
+          <div className="space-y-2">
+            {epics.map((epic) => (
+              <div key={epic.id} className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{epic.name}</p>
+                  {epic.description && <p className="text-xs text-slate-400">{epic.description}</p>}
+                </div>
+                <button onClick={() => deleteEpic(epic.id)} className="text-slate-400 hover:text-red-600">
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       <Card title="Tasks">
         <form onSubmit={createTask} className="space-y-2 mb-4">
           <div className="grid sm:grid-cols-3 gap-2">
@@ -381,6 +450,21 @@ export default function AdminProjectDetailPage() {
               onChange={(e) => setTaskForm({ ...taskForm, labels: e.target.value })}
               className="border border-slate-300 rounded-lg px-2 py-1 text-xs flex-1 min-w-[140px]"
             />
+            {epics.length > 0 && (
+              <>
+                <span className="text-xs text-slate-400 ml-2">Epic:</span>
+                <select
+                  value={taskForm.epic}
+                  onChange={(e) => setTaskForm({ ...taskForm, epic: e.target.value })}
+                  className="border border-slate-300 rounded-lg px-2 py-1 text-xs"
+                >
+                  <option value="">No epic</option>
+                  {epics.map((ep) => (
+                    <option key={ep.id} value={ep.id}>{ep.name}</option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-400">Assign to:</span>
@@ -448,6 +532,18 @@ export default function AdminProjectDetailPage() {
               ))}
             </select>
           )}
+          {epics.length > 0 && (
+            <select
+              value={taskFilters.epic}
+              onChange={(e) => setTaskFilters({ ...taskFilters, epic: e.target.value })}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs"
+            >
+              <option value="">All epics</option>
+              {epics.map((ep) => (
+                <option key={ep.id} value={ep.id}>{ep.name}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -487,6 +583,9 @@ export default function AdminProjectDetailPage() {
             <div className="mb-4">
               <TaskStatusPieChart tasks={visibleTasks} />
             </div>
+            <div className="mb-6 border-b border-slate-100 pb-6">
+              <ProjectDashboard tasks={visibleTasks} employees={employees.filter((emp) => project.members.includes(emp.id))} />
+            </div>
             <KanbanBoard
               tasks={visibleTasks}
               onStatusChange={updateTaskStatus}
@@ -504,6 +603,7 @@ export default function AdminProjectDetailPage() {
           canEdit={canManage}
           employees={employees.filter((emp) => project.members.includes(emp.id))}
           sprints={sprints}
+          epics={epics}
           onClose={() => setOpenTask(null)}
           onSave={saveTask}
           onStatusChange={updateTaskStatus}
