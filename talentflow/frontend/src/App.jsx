@@ -55,7 +55,7 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AppShell><AdminDashboard /></AppShell></ProtectedRoute>} />
       <Route path="/admin/projects" element={<ProtectedRoute roles={['admin']}><AppShell><AdminProjectsPage /></AppShell></ProtectedRoute>} />
       <Route path="/admin/projects/:id" element={<ProtectedRoute roles={['admin']} allowManagers><AppShell><AdminProjectDetailPage /></AppShell></ProtectedRoute>} />
-      <Route path="/admin/leave" element={<ProtectedRoute roles={['admin']}><AppShell><AdminLeaveRequestsPage /></AppShell></ProtectedRoute>} />
+      <Route path="/admin/leave" element={<ProtectedRoute roles={['admin']} allowManagers><AppShell><AdminLeaveRequestsPage /></AppShell></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

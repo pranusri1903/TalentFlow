@@ -1,16 +1,36 @@
-import { LogOut, Menu, X } from 'lucide-react'
-import { useState } from 'react'
+import { CalendarDays, LogOut, Menu, ShieldCheck, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
+import { api } from '../lib/api'
 import { NAV_BY_ROLE } from '../lib/navigation'
 import NotificationBell from './NotificationBell'
 
 export default function AppShell({ children }) {
   const { profile, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const links = profile ? NAV_BY_ROLE[profile.role] || [] : []
+  const [managedProjectId, setManagedProjectId] = useState(null)
   const initial = (profile?.full_name || profile?.email || '?')[0].toUpperCase()
+
+  useEffect(() => {
+    if (!profile?.is_manager) {
+      setManagedProjectId(null)
+      return
+    }
+    api.get('/projects/projects/').then(({ data }) => {
+      const managed = data.find((p) => p.manager === profile.employee_id)
+      setManagedProjectId(managed?.id || null)
+    })
+  }, [profile?.is_manager, profile?.employee_id])
+
+  const links = profile ? [...(NAV_BY_ROLE[profile.role] || [])] : []
+  if (managedProjectId) {
+    links.push({ to: `/admin/projects/${managedProjectId}`, label: 'Manage Team', icon: ShieldCheck })
+  }
+  if (profile?.is_manager) {
+    links.push({ to: '/admin/leave', label: 'Manage team leaves', icon: CalendarDays })
+  }
 
   return (
     <div className="h-screen bg-slate-50 flex overflow-hidden">

@@ -1,10 +1,8 @@
 import { CalendarPlus, CheckSquare, FolderKanban, ListChecks, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import GroupedTaskList from '../../components/GroupedTaskList'
 import KanbanBoard from '../../components/KanbanBoard'
-import LeaveRequestQueue from '../../components/LeaveRequestQueue'
 import StatusBadge from '../../components/StatusBadge'
 import TaskDetailModal from '../../components/TaskDetailModal'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
@@ -104,24 +102,13 @@ export default function EmployeeDashboard() {
         ) : (
           <div className="flex flex-wrap gap-2">
             {projects.map((p) => (
-              <span key={p.id} className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+              <span key={p.id} className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1.5 rounded-full">
                 {p.name}
-                {employee?.is_manager && p.manager === employee.id && (
-                  <Link to={`/admin/projects/${p.id}`} className="text-indigo-900 underline font-medium">
-                    Manage
-                  </Link>
-                )}
               </span>
             ))}
           </div>
         )}
       </Card>
-
-      {employee?.is_manager && (
-        <Card title="Team Leave Requests">
-          <LeaveRequestQueue />
-        </Card>
-      )}
 
       <Card
         title="Leave"
