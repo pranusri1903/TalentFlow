@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { TASK_PRIORITIES, TASK_TYPES } from '../lib/taskMeta'
 import { TASK_STATUSES } from '../lib/taskStatus'
 import Button from './ui/Button'
+import Chip from './ui/Chip'
 import Modal from './ui/Modal'
 
 function ActivityFeed({ taskId }) {
@@ -195,16 +196,9 @@ export default function TaskDetailModal({ task, canEdit, employees = [], sprints
           <p className="text-xs font-medium text-slate-500 mb-1.5">Assignees</p>
           <div className="flex flex-wrap gap-1.5">
             {employees.map((e) => (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => toggleAssignee(e.id)}
-                className={`text-xs px-2 py-1 rounded-full border ${
-                  form.assignees.includes(e.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600'
-                }`}
-              >
+              <Chip key={e.id} size="sm" active={form.assignees.includes(e.id)} onClick={() => toggleAssignee(e.id)}>
                 {e.profile.full_name || e.profile.email}
-              </button>
+              </Chip>
             ))}
           </div>
         </div>

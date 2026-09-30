@@ -1,4 +1,4 @@
-import { CalendarPlus, CheckSquare, FolderKanban, ListChecks, Search, X } from 'lucide-react'
+import { CalendarPlus, CheckSquare, FolderKanban, ListChecks, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -12,9 +12,10 @@ import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/ui/PageHeader'
+import SearchInput from '../../components/ui/SearchInput'
 import { useAuth } from '../../context/AuthContext'
 import { departmentLabel } from '../../lib/departments'
-import { TASK_PRIORITIES } from '../../lib/taskMeta'
+import { filterTasks, TASK_PRIORITIES, taskLabels } from '../../lib/taskMeta'
 import { api } from '../../lib/api'
 
 const EMPTY_LEAVE_FORM = { start_date: '', end_date: '', reason: '' }
@@ -81,18 +82,8 @@ export default function EmployeeDashboard() {
 
   const usedPct = leaveBalance ? Math.round((leaveBalance.used / leaveBalance.allowance) * 100) : 0
 
-  const filteredTasks = tasks
-    .filter((t) => {
-      const q = taskFilters.search.trim().toLowerCase()
-      return !q || t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
-    })
-    .filter((t) => !taskFilters.priority || t.priority === taskFilters.priority)
-    .filter(
-      (t) =>
-        !taskFilters.label ||
-        t.labels?.split(',').map((l) => l.trim().toLowerCase()).includes(taskFilters.label.toLowerCase())
-    )
-  const allTaskLabels = [...new Set(tasks.flatMap((t) => t.labels?.split(',').map((l) => l.trim()).filter(Boolean) || []))]
+  const filteredTasks = filterTasks(tasks, taskFilters)
+  const allTaskLabels = taskLabels(tasks)
 
   return (
     <div className="space-y-6">
@@ -233,15 +224,12 @@ export default function EmployeeDashboard() {
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <div className="relative flex-1 min-w-[160px]">
-                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  placeholder="Search my tasks..."
-                  value={taskFilters.search}
-                  onChange={(e) => setTaskFilters({ ...taskFilters, search: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg pl-8 pr-2 py-1.5 text-xs"
-                />
-              </div>
+              <SearchInput
+                size="sm"
+                placeholder="Search my tasks..."
+                value={taskFilters.search}
+                onChange={(e) => setTaskFilters({ ...taskFilters, search: e.target.value })}
+              />
               <select
                 value={taskFilters.priority}
                 onChange={(e) => setTaskFilters({ ...taskFilters, priority: e.target.value })}

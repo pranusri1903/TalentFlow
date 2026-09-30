@@ -1,13 +1,7 @@
 import { Navigate } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
-
-const HOME_BY_ROLE = {
-  candidate: '/jobs',
-  hr: '/hr',
-  employee: '/employee',
-  admin: '/admin',
-}
+import { HOME_BY_ROLE } from '../lib/navigation'
 
 export default function ProtectedRoute({ roles, allowManagers, children }) {
   const { session, profile, loading } = useAuth()

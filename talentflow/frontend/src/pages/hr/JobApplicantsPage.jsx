@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Search, UserX } from 'lucide-react'
+import { ArrowLeft, FileText, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -7,6 +7,7 @@ import StatusBadge from '../../components/StatusBadge'
 import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/ui/PageHeader'
+import SearchInput from '../../components/ui/SearchInput'
 import Spinner from '../../components/ui/Spinner'
 import { useAuth } from '../../context/AuthContext'
 import { DEPARTMENTS } from '../../lib/departments'
@@ -83,15 +84,11 @@ export default function JobApplicantsPage() {
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                placeholder="Search by candidate name..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+            <SearchInput
+              placeholder="Search by candidate name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}

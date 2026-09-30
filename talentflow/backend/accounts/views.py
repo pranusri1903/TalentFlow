@@ -90,16 +90,14 @@ class UserDetailView(RetrieveUpdateDestroyAPIView):
                 Employee.objects.get_or_create(profile=profile)
                 profile.role = Profile.EMPLOYEE
 
-        if 'department' in data:
+        if 'department' in data or 'job_title' in data:
             employee, _ = Employee.objects.get_or_create(profile=profile)
-            employee.department = data['department']
-            employee.save(update_fields=['department'])
-            profile.role = role_for('staff', data['department'])
-
-        if 'job_title' in data:
-            employee, _ = Employee.objects.get_or_create(profile=profile)
-            employee.job_title = data['job_title']
-            employee.save(update_fields=['job_title'])
+            if 'department' in data:
+                employee.department = data['department']
+                profile.role = role_for('staff', data['department'])
+            if 'job_title' in data:
+                employee.job_title = data['job_title']
+            employee.save(update_fields=[f for f in ('department', 'job_title') if f in data])
 
         if 'is_active' in data:
             was_active = profile.is_active

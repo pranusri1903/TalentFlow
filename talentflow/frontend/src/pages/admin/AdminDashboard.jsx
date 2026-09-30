@@ -1,10 +1,11 @@
-import { Ban, CheckCircle2, Plus, Search, UserRound, X } from 'lucide-react'
+import { Ban, CheckCircle2, Plus, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import DesignationField from '../../components/DesignationField'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import PageHeader from '../../components/ui/PageHeader'
+import SearchInput from '../../components/ui/SearchInput'
 import { DEPARTMENTS, departmentLabel } from '../../lib/departments'
 import { api } from '../../lib/api'
 
@@ -238,15 +239,11 @@ export default function AdminDashboard() {
       )}
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            placeholder="Search by name, email, or employee ID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
+        <SearchInput
+          placeholder="Search by name, email, or employee ID..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <select
           value={departmentFilter}
           onChange={(e) => setDepartmentFilter(e.target.value)}

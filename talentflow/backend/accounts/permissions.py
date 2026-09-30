@@ -26,5 +26,5 @@ class IsAdminOrManager(BasePermission):
             return False
         if user.role == 'admin':
             return True
-        from employees.models import Employee
-        return Employee.objects.filter(profile=user, job_title__icontains='manager').exists()
+        employee = getattr(user, 'employee', None)
+        return bool(employee and employee.is_manager)

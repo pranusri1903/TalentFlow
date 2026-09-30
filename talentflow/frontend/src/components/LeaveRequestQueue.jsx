@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import StatusBadge from './StatusBadge'
 import Button from './ui/Button'
+import Chip from './ui/Chip'
 import EmptyState from './ui/EmptyState'
 import { api } from '../lib/api'
 
@@ -30,15 +31,9 @@ export default function LeaveRequestQueue() {
     <div>
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`text-sm px-3 py-1.5 rounded-full border capitalize transition ${
-              filter === f ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
+          <Chip key={f} size="lg" capitalize active={filter === f} onClick={() => setFilter(f)}>
             {f}
-          </button>
+          </Chip>
         ))}
       </div>
 

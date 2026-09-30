@@ -36,6 +36,23 @@ def _task_snapshot(task):
     }
 
 
+def _manageable_project(view):
+    """Fetch the project_id from the URL, or 403 if the requester can't manage it."""
+    project = get_object_or_404(Project, id=view.kwargs['project_id'])
+    if not user_can_manage_project(view.request.user, project):
+        raise PermissionDenied('Not allowed.')
+    return project
+
+
+class ManageableProjectChildMixin:
+    """Any non-safe method on a Sprint/Epic/Task requires managing its parent project."""
+
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and not user_can_manage_project(request.user, obj.project):
+            raise PermissionDenied('Not allowed.')
+
+
 class ProjectListCreateView(ListCreateAPIView):
     serializer_class = ProjectSerializer
 
@@ -76,9 +93,7 @@ class ProjectTaskListCreateView(ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
-        project = get_object_or_404(Project, id=self.kwargs['project_id'])
-        if not user_can_manage_project(self.request.user, project):
-            raise PermissionDenied('Not allowed.')
+        project = _manageable_project(self)
         task = serializer.save(project=project)
         TaskActivity.objects.create(
             task=task, actor=self.request.user, message=f'{_actor_name(self.request.user)} created this task.'
@@ -95,21 +110,13 @@ class ProjectSprintListCreateView(ListCreateAPIView):
         return Sprint.objects.filter(project_id=self.kwargs['project_id']).order_by('-start_date')
 
     def perform_create(self, serializer):
-        project = get_object_or_404(Project, id=self.kwargs['project_id'])
-        if not user_can_manage_project(self.request.user, project):
-            raise PermissionDenied('Not allowed.')
-        serializer.save(project=project)
+        serializer.save(project=_manageable_project(self))
 
 
-class SprintDetailView(RetrieveUpdateDestroyAPIView):
+class SprintDetailView(ManageableProjectChildMixin, RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = SprintSerializer
     queryset = Sprint.objects.select_related('project')
-
-    def check_object_permissions(self, request, obj):
-        super().check_object_permissions(request, obj)
-        if request.method not in ('GET', 'HEAD', 'OPTIONS') and not user_can_manage_project(request.user, obj.project):
-            raise PermissionDenied('Not allowed.')
 
 
 class ProjectEpicListCreateView(ListCreateAPIView):
@@ -120,32 +127,19 @@ class ProjectEpicListCreateView(ListCreateAPIView):
         return Epic.objects.filter(project_id=self.kwargs['project_id']).order_by('-created_at')
 
     def perform_create(self, serializer):
-        project = get_object_or_404(Project, id=self.kwargs['project_id'])
-        if not user_can_manage_project(self.request.user, project):
-            raise PermissionDenied('Not allowed.')
-        serializer.save(project=project)
+        serializer.save(project=_manageable_project(self))
 
 
-class EpicDetailView(RetrieveUpdateDestroyAPIView):
+class EpicDetailView(ManageableProjectChildMixin, RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = EpicSerializer
     queryset = Epic.objects.select_related('project')
 
-    def check_object_permissions(self, request, obj):
-        super().check_object_permissions(request, obj)
-        if request.method not in ('GET', 'HEAD', 'OPTIONS') and not user_can_manage_project(request.user, obj.project):
-            raise PermissionDenied('Not allowed.')
 
-
-class TaskDetailView(RetrieveUpdateAPIView):
+class TaskDetailView(ManageableProjectChildMixin, RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TaskSerializer
     queryset = Task.objects.prefetch_related('assignees__profile').select_related('sprint', 'epic', 'project')
-
-    def check_object_permissions(self, request, obj):
-        super().check_object_permissions(request, obj)
-        if request.method not in ('GET', 'HEAD', 'OPTIONS') and not user_can_manage_project(request.user, obj.project):
-            raise PermissionDenied('Not allowed.')
 
     def perform_update(self, serializer):
         task = serializer.instance
@@ -175,7 +169,7 @@ class MyTasksView(ListAPIView):
     serializer_class = TaskSerializer
 
     def get_queryset(self):
-        employee = Employee.objects.filter(profile=self.request.user).first()
+        employee = getattr(self.request.user, 'employee', None)
         if not employee:
             return Task.objects.none()
         return Task.objects.prefetch_related('assignees__profile').select_related('sprint', 'epic').filter(

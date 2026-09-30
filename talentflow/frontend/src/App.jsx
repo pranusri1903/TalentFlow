@@ -17,8 +17,7 @@ import JobsListPage from './pages/jobseeker/JobsListPage'
 import MyApplicationsPage from './pages/jobseeker/MyApplicationsPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-
-const HOME_BY_ROLE = { candidate: '/jobs', hr: '/hr', employee: '/employee', admin: '/admin' }
+import { HOME_BY_ROLE } from './lib/navigation'
 
 function RootRedirect() {
   const { session, profile } = useAuth()

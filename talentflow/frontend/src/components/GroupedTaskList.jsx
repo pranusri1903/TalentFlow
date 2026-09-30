@@ -1,9 +1,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 
-import { priorityMeta, typeMeta } from '../lib/taskMeta'
-
-const today = () => new Date().toISOString().slice(0, 10)
+import { priorityMeta, today, typeMeta } from '../lib/taskMeta'
 
 function dueBucket(task) {
   if (!task.due_date) return 'No due date'

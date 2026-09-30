@@ -2,10 +2,8 @@ import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { Expand, GripVertical } from 'lucide-react'
 
-import { priorityMeta, typeMeta } from '../lib/taskMeta'
+import { isOverdue, parseCsv, priorityMeta, typeMeta } from '../lib/taskMeta'
 import { TASK_STATUSES } from '../lib/taskStatus'
-
-const isOverdue = (task) => task.due_date && task.status !== 'done' && task.due_date < new Date().toISOString().slice(0, 10)
 
 function Avatar({ name }) {
   return (
@@ -63,12 +61,11 @@ function TaskCard({ task, sprints, onSprintChange, onOpenTask }) {
             {task.due_date}
           </span>
         )}
-        {task.labels &&
-          task.labels.split(',').map((l) => l.trim()).filter(Boolean).map((label) => (
-            <span key={label} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600">
-              {label}
-            </span>
-          ))}
+        {parseCsv(task.labels).map((label) => (
+          <span key={label} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600">
+            {label}
+          </span>
+        ))}
       </div>
 
       <div className="flex items-center justify-between mt-2.5 ml-5">

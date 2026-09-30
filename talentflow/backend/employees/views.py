@@ -21,7 +21,7 @@ class MyEmployeeProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        employee = Employee.objects.filter(profile=request.user).first()
+        employee = getattr(request.user, 'employee', None)
         if not employee:
             return Response({'detail': 'No employee profile for this account.'}, status=404)
         return Response(EmployeeSerializer(employee).data)
@@ -48,7 +48,7 @@ class MyLeaveRequestsView(ListCreateAPIView):
     serializer_class = LeaveRequestSerializer
 
     def _employee(self):
-        return Employee.objects.filter(profile=self.request.user).first()
+        return getattr(self.request.user, 'employee', None)
 
     def get_queryset(self):
         employee = self._employee()
@@ -65,7 +65,7 @@ class MyLeaveBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        employee = Employee.objects.filter(profile=request.user).first()
+        employee = getattr(request.user, 'employee', None)
         if not employee:
             return Response({'detail': 'No employee profile for this account.'}, status=404)
 
@@ -85,7 +85,8 @@ class LeaveRequestQueueView(ListAPIView):
     def get_queryset(self):
         qs = LeaveRequest.objects.select_related('employee__profile', 'employee__manager__profile')
         if self.request.user.role != Profile.ADMIN:
-            manager = Employee.objects.filter(profile=self.request.user, job_title__icontains='manager').first()
+            employee = getattr(self.request.user, 'employee', None)
+            manager = employee if employee and employee.is_manager else None
             qs = qs.filter(employee__manager=manager)
         qs = qs.order_by('-created_at')
         status_param = self.request.query_params.get('status')
@@ -96,7 +97,7 @@ class MyLeaveCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        employee = Employee.objects.filter(profile=request.user).first()
+        employee = getattr(request.user, 'employee', None)
         leave_request = LeaveRequest.objects.filter(pk=pk, employee=employee).first()
         if not leave_request:
             return Response({'detail': 'Leave request not found.'}, status=404)

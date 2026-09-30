@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, Check, ListChecks, Plus, Search, ShieldCheck, Trash2, UserMinus, UserPlus, X,
+  ArrowLeft, Check, ListChecks, Plus, ShieldCheck, Trash2, UserMinus, UserPlus, X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -10,11 +10,13 @@ import TaskDetailModal from '../../components/TaskDetailModal'
 import TaskStatusPieChart from '../../components/TaskStatusPieChart'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
+import Chip from '../../components/ui/Chip'
 import EmptyState from '../../components/ui/EmptyState'
+import SearchInput from '../../components/ui/SearchInput'
 import Spinner from '../../components/ui/Spinner'
 import { useAuth } from '../../context/AuthContext'
 import { departmentLabel } from '../../lib/departments'
-import { TASK_PRIORITIES } from '../../lib/taskMeta'
+import { filterTasks, TASK_PRIORITIES, taskLabels } from '../../lib/taskMeta'
 import { api } from '../../lib/api'
 
 const EMPTY_TASK_FORM = {
@@ -146,24 +148,14 @@ export default function AdminProjectDetailPage() {
 
   if (!project) return <Spinner />
 
-  const visibleTasks = tasks
-    .filter((t) =>
+  const visibleTasks = filterTasks(
+    tasks.filter((t) =>
       sprintFilter === 'all' ? true : sprintFilter === 'backlog' ? !t.sprint : String(t.sprint) === sprintFilter
-    )
-    .filter((t) => {
-      const q = taskFilters.search.trim().toLowerCase()
-      return !q || t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
-    })
-    .filter((t) => !taskFilters.assignee || t.assignees.includes(Number(taskFilters.assignee)))
-    .filter((t) => !taskFilters.priority || t.priority === taskFilters.priority)
-    .filter(
-      (t) =>
-        !taskFilters.label ||
-        t.labels?.split(',').map((l) => l.trim().toLowerCase()).includes(taskFilters.label.toLowerCase())
-    )
-    .filter((t) => !taskFilters.epic || String(t.epic) === taskFilters.epic)
+    ),
+    taskFilters
+  )
 
-  const allLabels = [...new Set(tasks.flatMap((t) => t.labels?.split(',').map((l) => l.trim()).filter(Boolean) || []))]
+  const allLabels = taskLabels(tasks)
 
   return (
     <div className="space-y-6">
@@ -471,33 +463,22 @@ export default function AdminProjectDetailPage() {
             {employees
               .filter((emp) => project.members.includes(emp.id))
               .map((emp) => {
-                const selected = taskForm.assignees.includes(emp.id)
                 return (
-                  <button
-                    type="button"
-                    key={emp.id}
-                    onClick={() => toggleTaskAssignee(emp.id)}
-                    className={`text-xs px-2.5 py-1 rounded-full border transition ${
-                      selected ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
+                  <Chip key={emp.id} active={taskForm.assignees.includes(emp.id)} onClick={() => toggleTaskAssignee(emp.id)}>
                     {emp.profile.full_name || emp.profile.email}
-                  </button>
+                  </Chip>
                 )
               })}
           </div>
         </form>
 
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <div className="relative flex-1 min-w-[160px]">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              placeholder="Search tasks..."
-              value={taskFilters.search}
-              onChange={(e) => setTaskFilters({ ...taskFilters, search: e.target.value })}
-              className="w-full border border-slate-300 rounded-lg pl-8 pr-2 py-1.5 text-xs"
-            />
-          </div>
+          <SearchInput
+            size="sm"
+            placeholder="Search tasks..."
+            value={taskFilters.search}
+            onChange={(e) => setTaskFilters({ ...taskFilters, search: e.target.value })}
+          />
           <select
             value={taskFilters.assignee}
             onChange={(e) => setTaskFilters({ ...taskFilters, assignee: e.target.value })}
@@ -547,32 +528,12 @@ export default function AdminProjectDetailPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <button
-            onClick={() => setSprintFilter('all')}
-            className={`text-xs px-2.5 py-1 rounded-full border transition ${
-              sprintFilter === 'all' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setSprintFilter('backlog')}
-            className={`text-xs px-2.5 py-1 rounded-full border transition ${
-              sprintFilter === 'backlog' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Backlog
-          </button>
+          <Chip active={sprintFilter === 'all'} onClick={() => setSprintFilter('all')}>All</Chip>
+          <Chip active={sprintFilter === 'backlog'} onClick={() => setSprintFilter('backlog')}>Backlog</Chip>
           {sprints.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSprintFilter(String(s.id))}
-              className={`text-xs px-2.5 py-1 rounded-full border transition ${
-                sprintFilter === String(s.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
+            <Chip key={s.id} active={sprintFilter === String(s.id)} onClick={() => setSprintFilter(String(s.id))}>
               {s.name}
-            </button>
+            </Chip>
           ))}
         </div>
 

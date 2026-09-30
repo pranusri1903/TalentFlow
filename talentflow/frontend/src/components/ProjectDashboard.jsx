@@ -1,8 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-import { TASK_PRIORITIES, TASK_TYPES } from '../lib/taskMeta'
-
-const isOverdue = (task) => task.due_date && task.status !== 'done' && task.due_date < new Date().toISOString().slice(0, 10)
+import { isOverdue, TASK_PRIORITIES, TASK_TYPES } from '../lib/taskMeta'
 
 function StatCard({ label, value, accent }) {
   return (

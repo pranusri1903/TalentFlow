@@ -1,5 +1,7 @@
 import { Briefcase, CalendarDays, FileText, FolderKanban, LayoutDashboard, Search, Users } from 'lucide-react'
 
+export const HOME_BY_ROLE = { candidate: '/jobs', hr: '/hr', employee: '/employee', admin: '/admin' }
+
 export const NAV_BY_ROLE = {
   candidate: [
     { to: '/jobs', label: 'Browse Jobs', icon: Briefcase },

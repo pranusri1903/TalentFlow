@@ -1,10 +1,11 @@
-import { Search, SearchX } from 'lucide-react'
+import { SearchX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import StatusBadge from '../components/StatusBadge'
 import TaskDetailModal from '../components/TaskDetailModal'
 import EmptyState from '../components/ui/EmptyState'
 import PageHeader from '../components/ui/PageHeader'
+import SearchInput from '../components/ui/SearchInput'
 import { api } from '../lib/api'
 import { TASK_STATUSES } from '../lib/taskStatus'
 import { priorityMeta, TASK_PRIORITIES } from '../lib/taskMeta'
@@ -38,16 +39,7 @@ export default function GlobalSearchPage() {
       <PageHeader title="Search" subtitle="Find any task across every project you have access to" />
 
       <div className="flex flex-wrap items-center gap-2 mb-6">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            autoFocus
-            placeholder="Search by title or description..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
+        <SearchInput autoFocus placeholder="Search by title or description..." value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="border border-slate-300 rounded-lg px-2 py-2 text-sm">
           <option value="">All statuses</option>
           {TASK_STATUSES.map((s) => (

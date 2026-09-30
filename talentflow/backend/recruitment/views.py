@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from accounts.models import Profile
 from accounts.permissions import IsCandidate, IsHR, IsHROrAdmin
 from accounts.services import notify
+from accounts.views import role_for
 from employees.models import Employee
 
 from .models import Application, Job
@@ -144,7 +145,7 @@ class ApplicationStatusUpdateView(APIView):
 
     @staticmethod
     def _convert_to_employee(candidate, department, job_title):
-        candidate.role = Profile.HR if department == Employee.HR else Profile.EMPLOYEE
+        candidate.role = role_for('staff', department)
         candidate.save(update_fields=['role'])
         employee, _ = Employee.objects.get_or_create(profile=candidate)
         employee.department = department

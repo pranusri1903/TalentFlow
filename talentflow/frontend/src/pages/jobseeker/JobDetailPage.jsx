@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import Spinner from '../../components/ui/Spinner'
 import { api } from '../../lib/api'
+import { parseCsv } from '../../lib/taskMeta'
 
 export default function JobDetailPage() {
   const { id } = useParams()
@@ -71,9 +72,9 @@ export default function JobDetailPage() {
         <p className="text-slate-700 mt-4 whitespace-pre-line leading-relaxed">{job.description}</p>
         {job.skills && (
           <div className="flex flex-wrap gap-2 mt-4">
-            {job.skills.split(',').map((s) => (
+            {parseCsv(job.skills).map((s) => (
               <span key={s} className="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">
-                {s.trim()}
+                {s}
               </span>
             ))}
           </div>
