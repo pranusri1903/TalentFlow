@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { api } from '../lib/api'
-import { TASK_PRIORITIES, TASK_TYPES } from '../lib/taskMeta'
+import { isCollaborative, TASK_PRIORITIES, TASK_TYPES } from '../lib/taskMeta'
 import { TASK_STATUSES } from '../lib/taskStatus'
 import Button from './ui/Button'
 import Chip from './ui/Chip'
@@ -107,7 +107,14 @@ export default function TaskDetailModal({ task, canEdit, employees = [], sprints
             {task.epic_name && <span>Epic: <span className="font-medium">{task.epic_name}</span></span>}
           </div>
           {task.labels && <p className="text-slate-500">Labels: {task.labels}</p>}
-          <p className="text-slate-500">Assignees: {task.assignee_names?.join(', ') || 'Unassigned'}</p>
+          <p className="text-slate-500">
+            Assignees: {task.assignee_names?.join(', ') || 'Unassigned'}
+            {task.assignees?.length > 0 && (
+              <span className={isCollaborative(task) ? 'text-teal-700 font-medium' : 'text-slate-400'}>
+                {' '}({isCollaborative(task) ? 'Collaborative, any one of them can mark it done' : 'Individual'})
+              </span>
+            )}
+          </p>
           <label className="block text-xs font-medium text-slate-500 mt-3">Status</label>
           <select
             value={task.status}
@@ -193,7 +200,14 @@ export default function TaskDetailModal({ task, canEdit, employees = [], sprints
           placeholder="Labels, comma-separated"
         />
         <div>
-          <p className="text-xs font-medium text-slate-500 mb-1.5">Assignees</p>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs font-medium text-slate-500">Assignees</p>
+            {form.assignees.length > 0 && (
+              <p className={`text-xs font-medium ${form.assignees.length > 1 ? 'text-teal-700' : 'text-slate-400'}`}>
+                {form.assignees.length > 1 ? 'Collaborative, any one can mark it done' : 'Individual'}
+              </p>
+            )}
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {employees.map((e) => (
               <Chip key={e.id} size="sm" active={form.assignees.includes(e.id)} onClick={() => toggleAssignee(e.id)}>

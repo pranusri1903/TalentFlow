@@ -1,8 +1,8 @@
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Expand, GripVertical } from 'lucide-react'
+import { Expand, GripVertical, Users } from 'lucide-react'
 
-import { isOverdue, parseCsv, priorityMeta, typeMeta } from '../lib/taskMeta'
+import { isCollaborative, isOverdue, parseCsv, priorityMeta, typeMeta } from '../lib/taskMeta'
 import { TASK_STATUSES } from '../lib/taskStatus'
 
 function Avatar({ name }) {
@@ -80,6 +80,14 @@ function TaskCard({ task, sprints, onSprintChange, onOpenTask }) {
           </div>
         ) : (
           <span className="text-xs text-slate-400">Unassigned</span>
+        )}
+        {isCollaborative(task) && (
+          <span
+            title={`Collaborative: any one of ${task.assignees.length} people can complete this for everyone`}
+            className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-teal-50 text-teal-700"
+          >
+            <Users size={10} /> Collaborative
+          </span>
         )}
       </div>
 

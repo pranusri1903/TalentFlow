@@ -21,6 +21,10 @@ export const today = () => new Date().toISOString().slice(0, 10)
 
 export const isOverdue = (task) => task.due_date && task.status !== 'done' && task.due_date < today()
 
+// A task is collaborative the moment more than one person shares responsibility for it,
+// derived from the assignees list rather than stored, same pattern as is_manager on the backend.
+export const isCollaborative = (task) => task.assignees.length > 1
+
 export const parseCsv = (str) => (str ? str.split(',').map((s) => s.trim()).filter(Boolean) : [])
 
 export const taskLabels = (tasks) => [...new Set(tasks.flatMap((t) => parseCsv(t.labels)))]
